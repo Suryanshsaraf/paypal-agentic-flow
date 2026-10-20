@@ -5,8 +5,17 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![PayPal Developer Platform](https://img.shields.io/badge/PayPal-Sandbox%20API-003087?logo=paypal)](https://developer.paypal.com/)
 [![Gemini 1.5 Flash](https://img.shields.io/badge/AI-Google%20Gemini%201.5-8E75C4?logo=google)](https://aistudio.google.com/)
+[![Claude AI](https://img.shields.io/badge/AI%20Collaborator-Claude%20(Anthropic)-D97706?logo=anthropic)](https://github.com/claude)
 [![AG Grid](https://img.shields.io/badge/UI-AG%20Grid%20Community-E0234E)](https://www.ag-grid.com/)
 [![Deploy to Render](https://img.shields.io/badge/Deploy-Render-46E3B7?logo=render)](render.yaml)
+
+---
+
+## 👥 AI Collaborators & Development Partners
+* **[Suryansh Saraf](https://github.com/Suryanshsaraf)** — Project Lead & Full-Stack Architect
+* **[@claude (Anthropic)](https://github.com/claude)** — Autonomous Architecture & Agentic Flow Co-Author
+* **[Google Gemini 1.5](https://aistudio.google.com/)** — AST Vulnerability Scanner & Proof-of-Fix Arbiter
+* **[PayPal Developer Platform](https://developer.paypal.com/)** — Smart Escrow & Instant Payouts Engine
 
 ---
 
