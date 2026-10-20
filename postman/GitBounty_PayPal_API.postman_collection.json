@@ -1,0 +1,112 @@
+{
+  "info": {
+    "_postman_id": "7b8e1a2f-9810-4c7b-a456-gitbounty001",
+    "name": "GitBounty AI - PayPal & Gemini API Collection",
+    "description": "Complete collection of API endpoints for GitBounty AI: Autonomous Bug Escrow & Instant PayPal Payouts. Submitted for the PayPal AI Hackathon 2026.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. PayPal Orders - Create Bounty Escrow",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"bountyId\": \"bounty-104\",\n  \"amount\": 150,\n  \"currency\": \"USD\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/paypal/create-order",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "paypal", "create-order"]
+        },
+        "description": "Creates a PayPal Orders v2 order with capture intent to lock bounty funds into escrow."
+      }
+    },
+    {
+      "name": "2. PayPal Orders - Capture Escrow Funds",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"bountyId\": \"bounty-104\",\n  \"orderId\": \"MOCK-ORDER-104\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/paypal/capture-order",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "paypal", "capture-order"]
+        },
+        "description": "Captures the approved PayPal order and marks the bounty as FUNDED in escrow."
+      }
+    },
+    {
+      "name": "3. Gemini AI - PR Proof-of-Fix & Security Audit",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"bountyId\": \"bounty-104\",\n  \"prTitle\": \"fix(auth): clear session cache references to eliminate SSR memory leak\",\n  \"contributorName\": \"Marcus Vance\",\n  \"contributorEmail\": \"marcus.dev@fastmail.com\",\n  \"diffContent\": \"diff --git a/src/auth.ts b/src/auth.ts\\n@@ -88,6 +88,10 @@\\n+ if (sessionCache.has(sessionId)) { sessionCache.delete(sessionId); }\\n+ global.gc?.();\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/prs/audit",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "prs", "audit"]
+        },
+        "description": "Sends PR code diff to Gemini 1.5 Flash to scan for XZ-style backdoors and verify unit test resolution."
+      }
+    },
+    {
+      "name": "4. PayPal Payouts - Auto-Merge & Instant Batch Disbursement",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"bountyId\": \"bounty-104\",\n  \"prId\": \"pr-104-1\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/prs/merge-and-pay",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "prs", "merge-and-pay"]
+        },
+        "description": "Verifies passing AI audit score, merges the PR, and triggers PayPal Payouts v1 API to transfer cash directly to developer's PayPal wallet."
+      }
+    },
+    {
+      "name": "5. PayPal Webhooks - Ingest Webhook Event",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"event_type\": \"PAYMENT.PAYOUTSBATCH.SUCCESS\",\n  \"summary\": \"Payout batch completed\",\n  \"resource\": {\n    \"batch_header\": {\n      \"payout_batch_id\": \"BATCH-99412-SANDBOX\",\n      \"batch_status\": \"SUCCESS\"\n    }\n  }\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/webhooks/paypal",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "webhooks", "paypal"]
+        },
+        "description": "Simulates PayPal webhook events such as PAYMENT.CAPTURE.COMPLETED or PAYMENT.PAYOUTSBATCH.SUCCESS."
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ]
+}
