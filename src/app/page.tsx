@@ -5,6 +5,7 @@ import { Bounty } from "@/lib/types";
 import { Navbar } from "@/components/Navbar";
 import { StatsRibbon } from "@/components/StatsRibbon";
 import { DemoScenarios } from "@/components/DemoScenarios";
+import { AgentTerminal } from "@/components/AgentTerminal";
 import { BountyGrid } from "@/components/BountyGrid";
 import { PRSubmissionPanel } from "@/components/PRSubmissionPanel";
 import { FundBountyModal } from "@/components/FundBountyModal";
@@ -223,6 +224,9 @@ export default function Home() {
             isLoading={isAuditing || isPaying}
             activeScenario={activeScenario}
           />
+
+          {/* Official PayPal Agent Toolkit Terminal */}
+          <AgentTerminal />
 
           {/* Interactive AG Grid Bounty Board */}
           <BountyGrid
