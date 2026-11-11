@@ -9,12 +9,15 @@ import {
   Zap,
   RefreshCw,
   ArrowUpRight,
-  ArrowDownRight,
   Clock,
   CheckCircle2,
   BellRing,
-  UserCheck,
   ExternalLink,
+  Volume2,
+  VolumeX,
+  Sparkles,
+  ShieldCheck,
+  Play,
 } from "lucide-react";
 import Link from "next/link";
 import { Invoice, EventLog } from "@/lib/types";
@@ -26,6 +29,18 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { KpiSkeleton, TableRowSkeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { FinancialCharts } from "@/components/dashboard/financial-charts";
+import { SpotlightCard } from "@/components/interactive/spotlight-card";
+import { AgentOrb3D, AgentState } from "@/components/interactive/agent-orb-3d";
+import { MoneyFlowStream } from "@/components/interactive/money-flow-stream";
+import {
+  playSoftClick,
+  playHarmonicSuccess,
+  playAlertChime,
+  setSoundMuted,
+  getSoundMuted,
+} from "@/components/interactive/sound-effects";
+import { fireFintechCelebration } from "@/components/interactive/confetti";
+import { toast } from "sonner";
 
 /* ── Types ── */
 interface Stats {
@@ -39,7 +54,6 @@ interface Stats {
   totalInvoiceCount: number;
 }
 
-/* ── Greeting ── */
 function getGreeting(): string {
   const h = new Date().getHours();
   if (h < 12) return "Good morning";
@@ -47,7 +61,6 @@ function getGreeting(): string {
   return "Good evening";
 }
 
-/* ── Event Label ── */
 function eventLabel(type: string, payload: Record<string, any>): string {
   switch (type) {
     case "WEBHOOK_PAID":
@@ -89,13 +102,18 @@ function eventDotColor(type: string): string {
   return "bg-accent";
 }
 
-/* ── Page ── */
 export default function OverviewPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [events, setEvents] = useState<EventLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [health, setHealth] = useState<any>(null);
+
+  // Interactive 3D Agent State
+  const [agentState, setAgentState] = useState<AgentState>("idle");
+  const [isSweeping, setIsSweeping] = useState(false);
+  const [soundMuted, setSoundMutedState] = useState(false);
+  const [countdown, setCountdown] = useState(42);
 
   const fetchData = useCallback(async () => {
     try {
@@ -129,10 +147,46 @@ export default function OverviewPage() {
     return () => clearInterval(interval);
   }, [fetchData]);
 
+  // Countdown timer for next autonomous check
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCountdown((prev) => (prev <= 1 ? 45 : prev - 1));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const toggleSound = () => {
+    const next = !soundMuted;
+    setSoundMutedState(next);
+    setSoundMuted(next);
+    if (!next) playSoftClick();
+  };
+
+  // Trigger manual autonomous sweep
+  const handleTriggerSweep = async () => {
+    playSoftClick();
+    setIsSweeping(true);
+    setAgentState("thinking");
+    try {
+      const res = await fetch("/api/cron/tick", { method: "POST" });
+      const data = await res.json();
+      if (data.ok) {
+        setAgentState("settled");
+        playHarmonicSuccess();
+        toast.success(`Autonomous Sweep: Checked ${data.overdueCount || 0} overdue invoices`);
+        await fetchData();
+      }
+    } catch (err) {
+      setAgentState("idle");
+    } finally {
+      setIsSweeping(false);
+      setTimeout(() => setAgentState("idle"), 2500);
+    }
+  };
+
   const recentInvoices = invoices.slice(0, 8);
   const recentEvents = events.slice(0, 8);
 
-  // Compute overdue invoices (SENT + past due date)
   const now = new Date();
   const overdueInvoices = invoices.filter(
     (inv) => inv.status === "SENT" && new Date(inv.dueDate) < now
@@ -143,39 +197,77 @@ export default function OverviewPage() {
   );
 
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-8">
-      {/* ── Greeting Header ── */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-page-title text-text-primary">
-            {getGreeting()}, Alex
-          </h1>
-          <p className="text-body text-text-muted mt-1">
-            {stats && stats.totalOutstandingCents > 0
-              ? "Your finances are being taken care of."
-              : "All caught up — no outstanding invoices."}
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          {health && (
-            <div
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-control border text-meta ${
-                health.ok
-                  ? "border-success/20 text-success bg-success-muted"
-                  : "border-warning/20 text-warning bg-warning-muted"
-              }`}
-            >
-              <span className={`h-2 w-2 rounded-full ${health.ok ? "bg-success agent-pulse" : "bg-warning"}`} />
-              {health.ok ? "PayPal Connected" : "Checking…"}
+    <div className="relative z-10 p-6 md:p-8 max-w-7xl mx-auto space-y-8">
+      {/* ── Interactive Hero Command Deck ── */}
+      <SpotlightCard
+        className="p-6 md:p-8 border-accent/20 bg-gradient-to-br from-bg-elevated via-bg-secondary to-bg-interactive shadow-2xl"
+        spotlightColor="rgba(99, 102, 241, 0.16)"
+        borderColor="rgba(129, 140, 248, 0.4)"
+      >
+        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="space-y-3 max-w-xl text-center md:text-left">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-pill bg-accent-muted border border-accent/30 text-timestamp font-mono text-accent">
+              <span className="h-2 w-2 rounded-full bg-accent agent-pulse" />
+              <span>AUTONOMOUS AGENT ACTIVE • PAYPAL v2 CONNECTED</span>
             </div>
-          )}
-          <Button variant="ghost" size="sm" onClick={fetchData} icon={<RefreshCw className="w-3.5 h-3.5" />}>
-            Refresh
-          </Button>
-        </div>
-      </div>
 
-      {/* ── KPI Strip ── */}
+            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-white">
+              {getGreeting()}, <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-indigo-200 to-accent">Alex</span>.
+            </h1>
+
+            <p className="text-body text-text-secondary leading-relaxed">
+              Your accounts receivable are running entirely on autopilot. We monitor your PayPal webhooks,
+              detect inbound approvals, and automatically escalate overdue follow-ups.
+            </p>
+
+            {/* Quick Actions & Live Ticker */}
+            <div className="pt-2 flex flex-wrap items-center justify-center md:justify-start gap-3">
+              <Button
+                variant="primary"
+                size="md"
+                onClick={handleTriggerSweep}
+                loading={isSweeping}
+                icon={<Zap className="w-3.5 h-3.5" />}
+              >
+                Run Autonomous Sweep
+              </Button>
+
+              <button
+                onClick={toggleSound}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-control bg-bg-interactive hover:bg-bg-elevated border border-border text-meta text-text-muted hover:text-text-primary transition-colors"
+                title={soundMuted ? "Unmute UI Audio" : "Mute UI Audio"}
+              >
+                {soundMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5 text-accent" />}
+                <span className="text-timestamp font-mono">{soundMuted ? "Audio Off" : "Audio On"}</span>
+              </button>
+
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-control bg-bg-primary/60 border border-border/80 text-timestamp font-mono text-text-muted">
+                <Clock className="w-3 h-3 text-accent" />
+                <span>Next cycle in 00:{countdown < 10 ? `0${countdown}` : countdown}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* 3D Interactive Agent Orb */}
+          <div className="flex flex-col items-center justify-center">
+            <div
+              className="cursor-pointer group relative"
+              onClick={() => {
+                playSoftClick();
+                setAgentState((prev) => (prev === "idle" ? "thinking" : prev === "thinking" ? "chasing" : prev === "chasing" ? "settled" : "idle"));
+              }}
+              title="Click to cycle 3D Agent Core telemetry state"
+            >
+              <AgentOrb3D state={agentState} size={180} />
+              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] font-mono text-text-muted bg-bg-primary/80 px-2 py-0.5 rounded border border-border/80 group-hover:border-accent transition-colors">
+                State: <span className="text-accent uppercase font-bold">{agentState}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </SpotlightCard>
+
+      {/* ── KPI Strip with Interactive Spotlight Cards ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {loading ? (
           <>
@@ -187,12 +279,16 @@ export default function OverviewPage() {
         ) : stats ? (
           <>
             {/* Outstanding */}
-            <Card className="relative overflow-hidden">
+            <SpotlightCard
+              className="p-5"
+              spotlightColor="rgba(245, 158, 11, 0.12)"
+              borderColor="rgba(245, 158, 11, 0.4)"
+            >
               <div className="flex items-center gap-2 mb-3">
                 <div className="h-7 w-7 rounded-control bg-warning-muted flex items-center justify-center">
                   <Clock className="w-3.5 h-3.5 text-warning" />
                 </div>
-                <span className="text-meta text-text-muted">Outstanding</span>
+                <span className="text-meta text-text-muted font-medium">Outstanding</span>
               </div>
               <div className="text-figure-lg text-text-primary tabular-nums">
                 <CountUp
@@ -202,17 +298,21 @@ export default function OverviewPage() {
                 />
               </div>
               <p className="text-timestamp text-text-muted mt-1">
-                {stats.sentCount} invoice{stats.sentCount !== 1 ? "s" : ""} pending
+                {stats.sentCount} invoice{stats.sentCount !== 1 ? "s" : ""} active
               </p>
-            </Card>
+            </SpotlightCard>
 
             {/* Overdue */}
-            <Card className={`relative overflow-hidden ${overdueInvoices.length > 0 ? "border-danger/30" : ""}`}>
+            <SpotlightCard
+              className={`p-5 ${overdueInvoices.length > 0 ? "border-danger/40" : ""}`}
+              spotlightColor="rgba(244, 63, 94, 0.14)"
+              borderColor="rgba(244, 63, 94, 0.5)"
+            >
               <div className="flex items-center gap-2 mb-3">
                 <div className={`h-7 w-7 rounded-control flex items-center justify-center ${overdueInvoices.length > 0 ? "bg-danger-muted" : "bg-bg-interactive"}`}>
                   <AlertTriangle className={`w-3.5 h-3.5 ${overdueInvoices.length > 0 ? "text-danger" : "text-text-muted"}`} />
                 </div>
-                <span className="text-meta text-text-muted">Overdue</span>
+                <span className="text-meta text-text-muted font-medium">Overdue</span>
               </div>
               <div className={`text-figure-lg tabular-nums ${overdueInvoices.length > 0 ? "text-danger" : "text-text-primary"}`}>
                 <CountUp
@@ -222,17 +322,21 @@ export default function OverviewPage() {
                 />
               </div>
               <p className="text-timestamp text-text-muted mt-1">
-                {overdueInvoices.length} overdue invoice{overdueInvoices.length !== 1 ? "s" : ""}
+                {overdueInvoices.length} escalating follow-ups
               </p>
-            </Card>
+            </SpotlightCard>
 
             {/* Collected */}
-            <Card className="relative overflow-hidden">
+            <SpotlightCard
+              className="p-5"
+              spotlightColor="rgba(16, 185, 129, 0.12)"
+              borderColor="rgba(16, 185, 129, 0.4)"
+            >
               <div className="flex items-center gap-2 mb-3">
                 <div className="h-7 w-7 rounded-control bg-success-muted flex items-center justify-center">
                   <TrendingUp className="w-3.5 h-3.5 text-success" />
                 </div>
-                <span className="text-meta text-text-muted">Collected</span>
+                <span className="text-meta text-text-muted font-medium">Collected</span>
               </div>
               <div className="text-figure-lg text-success tabular-nums">
                 <CountUp
@@ -244,15 +348,19 @@ export default function OverviewPage() {
               <p className="text-timestamp text-text-muted mt-1">
                 {stats.paidCount} paid invoice{stats.paidCount !== 1 ? "s" : ""}
               </p>
-            </Card>
+            </SpotlightCard>
 
             {/* Total Invoiced */}
-            <Card className="relative overflow-hidden">
+            <SpotlightCard
+              className="p-5"
+              spotlightColor="rgba(99, 102, 241, 0.12)"
+              borderColor="rgba(129, 140, 248, 0.4)"
+            >
               <div className="flex items-center gap-2 mb-3">
                 <div className="h-7 w-7 rounded-control bg-accent-muted flex items-center justify-center">
                   <DollarSign className="w-3.5 h-3.5 text-accent" />
                 </div>
-                <span className="text-meta text-text-muted">Total Invoiced</span>
+                <span className="text-meta text-text-muted font-medium">Total Invoiced</span>
               </div>
               <div className="text-figure-lg text-text-primary tabular-nums">
                 <CountUp
@@ -262,14 +370,17 @@ export default function OverviewPage() {
                 />
               </div>
               <p className="text-timestamp text-text-muted mt-1">
-                {stats.totalInvoiceCount} total invoice{stats.totalInvoiceCount !== 1 ? "s" : ""}
+                {stats.totalInvoiceCount} total transactions
               </p>
-            </Card>
+            </SpotlightCard>
           </>
         ) : null}
       </div>
 
-      {/* ── Financial Analytics ── */}
+      {/* ── Live Money Flow Stream Canvas ── */}
+      <MoneyFlowStream invoices={invoices} />
+
+      {/* ── Financial Analytics Recharts ── */}
       <FinancialCharts invoices={invoices} />
 
       {/* ── Two Column: Recent Invoices + Agent Feed ── */}
@@ -313,49 +424,48 @@ export default function OverviewPage() {
               />
             </Card>
           ) : (
-            <Card padding="none">
-              <div className="divide-y divide-border">
-                {/* Header */}
-                <div className="grid grid-cols-12 gap-3 px-4 py-2.5 text-timestamp text-text-muted font-medium">
-                  <span className="col-span-3">Client</span>
-                  <span className="col-span-2">Invoice</span>
-                  <span className="col-span-3">Description</span>
-                  <span className="col-span-2 text-right">Amount</span>
-                  <span className="col-span-2 text-right">Status</span>
-                </div>
-
-                {recentInvoices.map((inv) => (
-                  <Link
-                    key={inv.id}
-                    href={`/invoices?selected=${inv.id}`}
-                    className="grid grid-cols-12 gap-3 px-4 py-3 items-center hover:bg-bg-interactive transition-colors group"
-                  >
-                    <div className="col-span-3 min-w-0">
-                      <span className="text-body text-text-primary font-medium truncate block">
-                        {inv.client?.name || "Client"}
-                      </span>
-                      {inv.client?.company && (
-                        <span className="text-timestamp text-text-muted truncate block">
-                          {inv.client.company}
-                        </span>
-                      )}
-                    </div>
-                    <span className="col-span-2 text-meta text-text-muted font-mono truncate">
-                      {inv.invoiceNumber}
-                    </span>
-                    <span className="col-span-3 text-meta text-text-secondary truncate">
-                      {inv.lineItems[0]?.description || "—"}
-                    </span>
-                    <span className="col-span-2 text-body text-text-primary font-semibold tabular-nums text-right">
-                      {formatCents(inv.amountTotalCents, inv.currency)}
-                    </span>
-                    <div className="col-span-2 flex justify-end">
-                      <InvoiceStatusBadge status={inv.status} dueDate={inv.dueDate} />
-                    </div>
-                  </Link>
-                ))}
+            <SpotlightCard padding="none" className="divide-y divide-border">
+              {/* Header */}
+              <div className="grid grid-cols-12 gap-3 px-4 py-2.5 text-timestamp text-text-muted font-medium">
+                <span className="col-span-3">Client</span>
+                <span className="col-span-2">Invoice</span>
+                <span className="col-span-3">Description</span>
+                <span className="col-span-2 text-right">Amount</span>
+                <span className="col-span-2 text-right">Status</span>
               </div>
-            </Card>
+
+              {recentInvoices.map((inv) => (
+                <Link
+                  key={inv.id}
+                  href={`/invoices?selected=${inv.id}`}
+                  onClick={() => playSoftClick()}
+                  className="grid grid-cols-12 gap-3 px-4 py-3 items-center hover:bg-bg-interactive transition-colors group"
+                >
+                  <div className="col-span-3 min-w-0">
+                    <span className="text-body text-text-primary font-medium truncate block">
+                      {inv.client?.name || "Client"}
+                    </span>
+                    {inv.client?.company && (
+                      <span className="text-timestamp text-text-muted truncate block">
+                        {inv.client.company}
+                      </span>
+                    )}
+                  </div>
+                  <span className="col-span-2 text-meta text-text-muted font-mono truncate">
+                    {inv.invoiceNumber}
+                  </span>
+                  <span className="col-span-3 text-meta text-text-secondary truncate">
+                    {inv.lineItems[0]?.description || "—"}
+                  </span>
+                  <span className="col-span-2 text-body text-text-primary font-semibold tabular-nums text-right">
+                    {formatCents(inv.amountTotalCents, inv.currency)}
+                  </span>
+                  <div className="col-span-2 flex justify-end">
+                    <InvoiceStatusBadge status={inv.status} dueDate={inv.dueDate} />
+                  </div>
+                </Link>
+              ))}
+            </SpotlightCard>
           )}
         </div>
 
@@ -374,7 +484,7 @@ export default function OverviewPage() {
             </Link>
           </div>
 
-          <Card padding="sm">
+          <SpotlightCard className="p-4">
             {recentEvents.length === 0 ? (
               <EmptyState
                 icon={<Zap className="w-8 h-8" />}
@@ -422,7 +532,7 @@ export default function OverviewPage() {
                 ))}
               </div>
             )}
-          </Card>
+          </SpotlightCard>
         </div>
       </div>
     </div>

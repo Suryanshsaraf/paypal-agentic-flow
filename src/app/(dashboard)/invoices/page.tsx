@@ -29,6 +29,13 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { TableRowSkeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { SpotlightCard } from "@/components/interactive/spotlight-card";
+import { fireFintechCelebration } from "@/components/interactive/confetti";
+import {
+  playSoftClick,
+  playHarmonicSuccess,
+  playAlertChime,
+} from "@/components/interactive/sound-effects";
 
 type TabFilter = "ALL" | "SENT" | "PAID" | "OVERDUE" | "NEEDS_REVIEW";
 
@@ -152,6 +159,8 @@ function InvoicesContent() {
         toast.error(data.error || "Failed to create invoice");
         return;
       }
+      playHarmonicSuccess();
+      fireFintechCelebration();
       toast.success(
         `Invoice ${data.invoice.invoiceNumber} created & sent via PayPal!`
       );
@@ -180,6 +189,8 @@ function InvoicesContent() {
         toast.error(data.error || "Failed");
         return;
       }
+      playHarmonicSuccess();
+      fireFintechCelebration();
       toast.success(`Payment settled! ${data.message}`);
       await fetchInvoices();
     } catch (err: any) {
@@ -202,6 +213,7 @@ function InvoicesContent() {
         toast.error(data.error || "Failed");
         return;
       }
+      playAlertChime();
       toast.success("Time Machine: Invoice backdated! Agent escalated.");
       await fetchInvoices();
     } catch (err: any) {
@@ -224,6 +236,7 @@ function InvoicesContent() {
         toast.error(data.error || "Failed");
         return;
       }
+      playAlertChime();
       if (data.escalatedToHuman) {
         toast.warning("Agent limits reached. Invoice escalated to human review.");
       } else {
