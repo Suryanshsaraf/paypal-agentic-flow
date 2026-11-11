@@ -70,9 +70,64 @@ function createInitialStore(): DatabaseStore {
     updatedAt: new Date(Date.now() - 60 * 86400000).toISOString(),
   };
 
+  const veloce: Client = {
+    id: "cli_veloce",
+    name: "Marcus Vance",
+    email: "marcus.vance@velocelogistics.com",
+    company: "Veloce Fleet Logistics",
+    phone: "+1-312-555-0177",
+    createdAt: new Date(Date.now() - 75 * 86400000).toISOString(),
+    updatedAt: new Date(Date.now() - 75 * 86400000).toISOString(),
+  };
+
+  const lumina: Client = {
+    id: "cli_lumina",
+    name: "Priya Patel",
+    email: "priya@luminahealth.ai",
+    company: "Lumina Health Intelligence",
+    phone: "+1-415-555-0163",
+    createdAt: new Date(Date.now() - 90 * 86400000).toISOString(),
+    updatedAt: new Date(Date.now() - 90 * 86400000).toISOString(),
+  };
+
+  const monolith: Client = {
+    id: "cli_monolith",
+    name: "Julian Thorne",
+    email: "julian@monolithstudio.dk",
+    company: "Monolith Architecture Copenhagen",
+    phone: "+45-32-555-019",
+    createdAt: new Date(Date.now() - 110 * 86400000).toISOString(),
+    updatedAt: new Date(Date.now() - 110 * 86400000).toISOString(),
+  };
+
+  const kinetix: Client = {
+    id: "cli_kinetix",
+    name: "Alexander Hayes",
+    email: "a.hayes@kinetixrobotics.de",
+    company: "Kinetix Robotics GmbH",
+    phone: "+49-89-555-012",
+    createdAt: new Date(Date.now() - 120 * 86400000).toISOString(),
+    updatedAt: new Date(Date.now() - 120 * 86400000).toISOString(),
+  };
+
+  const nexus: Client = {
+    id: "cli_nexus",
+    name: "Vikram Malhotra",
+    email: "vikram@nexuscap.sg",
+    company: "Nexus Capital Partners",
+    phone: "+65-6555-0144",
+    createdAt: new Date(Date.now() - 140 * 86400000).toISOString(),
+    updatedAt: new Date(Date.now() - 140 * 86400000).toISOString(),
+  };
+
   store.clients.set(acme.id, acme);
   store.clients.set(fintech.id, fintech);
   store.clients.set(hyper.id, hyper);
+  store.clients.set(veloce.id, veloce);
+  store.clients.set(lumina.id, lumina);
+  store.clients.set(monolith.id, monolith);
+  store.clients.set(kinetix.id, kinetix);
+  store.clients.set(nexus.id, nexus);
 
   // Seed Invoices
   // Invoice 1: Acme Corp - Overdue 6 days (Level 1 Friendly Reminder sent)
@@ -217,6 +272,143 @@ function createInitialStore(): DatabaseStore {
   store.invoices.set(inv1.id, inv1);
   store.invoices.set(inv2.id, inv2);
   store.invoices.set(inv3.id, inv3);
+
+  // Invoice 4: Veloce Logistics - Paid ($4,250.00)
+  const inv4: Invoice = {
+    id: "inv_veloce_004",
+    clientId: veloce.id,
+    client: veloce,
+    invoiceNumber: "INV-2024-004",
+    paypalInvoiceId: "INV2-DEMO-VELOCE-4421",
+    status: "PAID",
+    amountTotalCents: 425000,
+    currency: "USD",
+    dueDate: new Date(Date.now() - 22 * 86400000).toISOString().split("T")[0],
+    reminderLevel: 0,
+    workStatus: "COMPLETED",
+    lateFeeCents: 0,
+    lineItems: [
+      {
+        id: "li_4",
+        invoiceId: "inv_veloce_004",
+        description: "Warehouse Fleet Tracking Dashboard & Telemetry UX",
+        quantity: 1,
+        unitPriceCents: 425000,
+        totalCents: 425000,
+      },
+    ],
+    reminders: [],
+    events: [],
+    sourceMessage: "Marcus Vance: Alex, scope approved for fleet telemetry dashboard. Bill $4,250.",
+    paypalPaymentUrl: "https://www.sandbox.paypal.com/invoice/p/#INV2-DEMO-VELOCE-4421",
+    paidAt: new Date(Date.now() - 20 * 86400000).toISOString(),
+    createdAt: new Date(Date.now() - 35 * 86400000).toISOString(),
+    updatedAt: new Date(Date.now() - 20 * 86400000).toISOString(),
+  };
+
+  // Invoice 5: Lumina Health AI - Paid ($2,900.00)
+  const inv5: Invoice = {
+    id: "inv_lumina_005",
+    clientId: lumina.id,
+    client: lumina,
+    invoiceNumber: "INV-2024-005",
+    paypalInvoiceId: "INV2-DEMO-LUMINA-8812",
+    status: "PAID",
+    amountTotalCents: 290000,
+    currency: "USD",
+    dueDate: new Date(Date.now() - 38 * 86400000).toISOString().split("T")[0],
+    reminderLevel: 0,
+    workStatus: "COMPLETED",
+    lateFeeCents: 0,
+    lineItems: [
+      {
+        id: "li_5",
+        invoiceId: "inv_lumina_005",
+        description: "Bio-Metric Wearable Patient Health iOS Prototype",
+        quantity: 1,
+        unitPriceCents: 290000,
+        totalCents: 290000,
+      },
+    ],
+    reminders: [],
+    events: [],
+    sourceMessage: "Priya Patel: The iOS patient health build looks great. Send invoice for $2,900.",
+    paypalPaymentUrl: "https://www.sandbox.paypal.com/invoice/p/#INV2-DEMO-LUMINA-8812",
+    paidAt: new Date(Date.now() - 36 * 86400000).toISOString(),
+    createdAt: new Date(Date.now() - 50 * 86400000).toISOString(),
+    updatedAt: new Date(Date.now() - 36 * 86400000).toISOString(),
+  };
+
+  // Invoice 6: Monolith Architecture - Paid ($6,400.00)
+  const inv6: Invoice = {
+    id: "inv_monolith_006",
+    clientId: monolith.id,
+    client: monolith,
+    invoiceNumber: "INV-2024-006",
+    paypalInvoiceId: "INV2-DEMO-MONOLITH-3190",
+    status: "PAID",
+    amountTotalCents: 640000,
+    currency: "USD",
+    dueDate: new Date(Date.now() - 52 * 86400000).toISOString().split("T")[0],
+    reminderLevel: 0,
+    workStatus: "COMPLETED",
+    lateFeeCents: 0,
+    lineItems: [
+      {
+        id: "li_6",
+        invoiceId: "inv_monolith_006",
+        description: "Nordic Minimalist Architectural Portfolio & 3D Interactive Viewer",
+        quantity: 1,
+        unitPriceCents: 640000,
+        totalCents: 640000,
+      },
+    ],
+    reminders: [],
+    events: [],
+    sourceMessage: "Julian Thorne: Nordic portfolio concept is accepted. Proceed with PayPal invoice for $6,400.",
+    paypalPaymentUrl: "https://www.sandbox.paypal.com/invoice/p/#INV2-DEMO-MONOLITH-3190",
+    paidAt: new Date(Date.now() - 50 * 86400000).toISOString(),
+    createdAt: new Date(Date.now() - 65 * 86400000).toISOString(),
+    updatedAt: new Date(Date.now() - 50 * 86400000).toISOString(),
+  };
+
+  // Invoice 7: Kinetix Robotics - Paid ($5,100.00)
+  const inv7: Invoice = {
+    id: "inv_kinetix_007",
+    clientId: kinetix.id,
+    client: kinetix,
+    invoiceNumber: "INV-2024-007",
+    paypalInvoiceId: "INV2-DEMO-KINETIX-9014",
+    status: "PAID",
+    amountTotalCents: 510000,
+    currency: "USD",
+    dueDate: new Date(Date.now() - 68 * 86400000).toISOString().split("T")[0],
+    reminderLevel: 0,
+    workStatus: "COMPLETED",
+    lateFeeCents: 0,
+    lineItems: [
+      {
+        id: "li_7",
+        invoiceId: "inv_kinetix_007",
+        description: "Industrial Robotic Arm Controller Interface & Design Tokens",
+        quantity: 1,
+        unitPriceCents: 510000,
+        totalCents: 510000,
+      },
+    ],
+    reminders: [],
+    events: [],
+    sourceMessage: "Alexander Hayes: Kinetix controller interface signed off. Bill $5,100 to robotics account.",
+    paypalPaymentUrl: "https://www.sandbox.paypal.com/invoice/p/#INV2-DEMO-KINETIX-9014",
+    paidAt: new Date(Date.now() - 66 * 86400000).toISOString(),
+    createdAt: new Date(Date.now() - 80 * 86400000).toISOString(),
+    updatedAt: new Date(Date.now() - 66 * 86400000).toISOString(),
+  };
+
+  store.invoices.set(inv4.id, inv4);
+  store.invoices.set(inv5.id, inv5);
+  store.invoices.set(inv6.id, inv6);
+  store.invoices.set(inv7.id, inv7);
 
   // Initial Events
   store.events.push(
