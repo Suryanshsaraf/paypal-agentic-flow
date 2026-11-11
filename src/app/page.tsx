@@ -24,10 +24,12 @@ import {
   Calendar,
   AlertCircle,
   CreditCard,
-  HeartHandshake,
+  History,
+  FastForward,
+  UserCheck,
 } from "lucide-react";
 import { Invoice, Client, EventLog } from "@/lib/types";
-import { formatCents, centsToDecimalString, dollarsToCents } from "@/lib/money";
+import { formatCents, centsToDecimalString } from "@/lib/money";
 
 export default function AppShell() {
   const [healthStatus, setHealthStatus] = useState<any>(null);
@@ -38,7 +40,10 @@ export default function AppShell() {
   const [events, setEvents] = useState<EventLog[]>([]);
   const [activeTab, setActiveTab] = useState<"ALL" | "SENT" | "PAID">("ALL");
   const [isLoadingInvoices, setIsLoadingInvoices] = useState(false);
-  const [payingInvoiceId, setPayingInvoiceId] = useState<string | null>(null);
+  const [activeActionId, setActiveActionId] = useState<string | null>(null);
+
+  // Selected Invoice for Reminders Inspection
+  const [inspectingInvoice, setInspectingInvoice] = useState<Invoice | null>(null);
 
   // Copilot Compose & Proposal
   const [inputText, setInputText] = useState("");
@@ -77,6 +82,11 @@ export default function AppShell() {
       const data = await res.json();
       if (data.ok && Array.isArray(data.invoices)) {
         setInvoices(data.invoices);
+        // Refresh inspected invoice if currently selected
+        if (inspectingInvoice) {
+          const updated = data.invoices.find((i: Invoice) => i.id === inspectingInvoice.id);
+          if (updated) setInspectingInvoice(updated);
+        }
       }
     } catch (err) {
       console.error("Error fetching invoices:", err);
@@ -87,7 +97,7 @@ export default function AppShell() {
 
   async function fetchEvents() {
     try {
-      const res = await fetch("/api/events?limit=25");
+      const res = await fetch("/api/events?limit=30");
       const data = await res.json();
       if (data.ok && Array.isArray(data.events)) {
         setEvents(data.events);
@@ -172,7 +182,7 @@ export default function AppShell() {
 
   // Handle Demo Mark Paid (Stage 3 Watch Replay)
   async function handleMarkPaid(invoiceId: string) {
-    setPayingInvoiceId(invoiceId);
+    setActiveActionId(invoiceId);
     setErrorMessage(null);
 
     try {
@@ -188,12 +198,70 @@ export default function AppShell() {
         return;
       }
 
-      setSuccessBanner(`Webhook Verified! ${data.message}`);
+      setSuccessBanner(`Payment Settled! ${data.message}`);
       await refreshAll();
     } catch (err: any) {
       setErrorMessage(err?.message || "Error processing payment replay.");
     } finally {
-      setPayingInvoiceId(null);
+      setActiveActionId(null);
+    }
+  }
+
+  // Handle Simulate Overdue (Stage 4 Chase Time Machine)
+  async function handleSimulateOverdue(invoiceId: string) {
+    setActiveActionId(invoiceId);
+    setErrorMessage(null);
+
+    try {
+      const res = await fetch("/api/demo/simulate-overdue", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ invoiceId, autoChase: true }),
+      });
+
+      const data = await res.json();
+      if (!data.ok) {
+        setErrorMessage(data.error || "Failed to simulate overdue.");
+        return;
+      }
+
+      setSuccessBanner(`Time Machine: Invoice backdated! Autonomous agent escalated reminder.`);
+      await refreshAll();
+    } catch (err: any) {
+      setErrorMessage(err?.message || "Error simulating overdue.");
+    } finally {
+      setActiveActionId(null);
+    }
+  }
+
+  // Handle Remind Now Manual Trigger
+  async function handleRemindNow(invoiceId: string) {
+    setActiveActionId(invoiceId);
+    setErrorMessage(null);
+
+    try {
+      const res = await fetch(`/api/invoices/${invoiceId}/remind`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason: "Manual user trigger" }),
+      });
+
+      const data = await res.json();
+      if (!data.ok) {
+        setErrorMessage(data.error || "Failed to dispatch reminder.");
+        return;
+      }
+
+      if (data.escalatedToHuman) {
+        setSuccessBanner("Agent limits reached (Level 3 passed). Invoice escalated to human review.");
+      } else {
+        setSuccessBanner(`Reminder Level ${data.reminder.level} (${data.reminder.tone}) sent via PayPal!`);
+      }
+      await refreshAll();
+    } catch (err: any) {
+      setErrorMessage(err?.message || "Error triggering reminder.");
+    } finally {
+      setActiveActionId(null);
     }
   }
 
@@ -204,7 +272,7 @@ export default function AppShell() {
     return true;
   });
 
-  // Calculate stats dynamically
+  // Dynamic Financial Totals
   const totalOutstandingCents = invoices
     .filter((inv) => inv.status === "SENT")
     .reduce((sum, inv) => sum + inv.amountTotalCents, 0);
@@ -228,7 +296,7 @@ export default function AppShell() {
                 Autonomous AR Copilot
               </span>
             </div>
-            <p className="text-xs text-slate-400">Powered by PayPal Invoicing v2 & Multi-Tier Escalation</p>
+            <p className="text-xs text-slate-400">Powered by PayPal Invoicing v2 & Multi-Tier Tone Escalation</p>
           </div>
         </div>
 
@@ -268,7 +336,7 @@ export default function AppShell() {
               <h2 className="font-semibold text-sm text-slate-200">AR Copilot & Invoicing</h2>
             </div>
             <span className="text-xs px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 font-mono">
-              Stage 3 Watch
+              Stage 4 Chase
             </span>
           </div>
 
@@ -278,7 +346,7 @@ export default function AppShell() {
               <Sparkles className="w-5 h-5 text-blue-400 shrink-0 mt-0.5" />
               <div className="text-xs leading-relaxed text-slate-300">
                 <strong className="text-white block mb-1">Paste any conversation or client agreement.</strong>
-                Get Paid parses line items, scopes the price, verifies email, and sends a PayPal invoice. When payment lands, webhooks trigger instant settlement and thank-you confirmation.
+                Get Paid parses line items, scopes the price, verifies email, and sends a PayPal invoice. It watches for payment and escalates reminders (Friendly → Neutral → Firm) so you never write awkward emails.
               </div>
             </div>
           </div>
@@ -443,6 +511,41 @@ export default function AppShell() {
             </div>
           )}
 
+          {/* Reminders Inspection Box (If an invoice is clicked) */}
+          {inspectingInvoice && (
+            <div className="p-4 rounded-xl bg-slate-900 border border-amber-500/30 shadow-xl mb-4 space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                <span className="text-xs font-bold text-amber-400 flex items-center gap-1.5">
+                  <History className="w-4 h-4" />
+                  Chase History: {inspectingInvoice.invoiceNumber}
+                </span>
+                <button
+                  onClick={() => setInspectingInvoice(null)}
+                  className="text-slate-400 hover:text-slate-200 text-xs"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="text-xs space-y-2 max-h-48 overflow-y-auto">
+                {inspectingInvoice.reminders.length === 0 ? (
+                  <p className="text-slate-500 text-center py-2">No reminders sent yet for this invoice.</p>
+                ) : (
+                  inspectingInvoice.reminders.map((rem, i) => (
+                    <div key={i} className="p-2.5 rounded bg-slate-800/80 border border-slate-700 text-slate-300">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="font-bold text-blue-300">Level {rem.level}: {rem.tone}</span>
+                        <span className="text-[10px] text-slate-400">{new Date(rem.sentAt).toLocaleDateString()}</span>
+                      </div>
+                      <p className="text-[11px] font-semibold text-slate-200 mb-1">{rem.subject}</p>
+                      <p className="text-[10px] text-slate-400 whitespace-pre-line leading-relaxed">{rem.body}</p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Input Area */}
           <div className="flex-1 flex flex-col justify-end space-y-3">
             <div className="relative">
@@ -531,6 +634,8 @@ export default function AppShell() {
                 className={`p-4 rounded-xl border transition ${
                   inv.status === "PAID"
                     ? "bg-slate-900/40 border-slate-800 hover:bg-slate-900/70"
+                    : inv.status === "NEEDS_REVIEW"
+                    ? "bg-rose-950/30 border-rose-600/50 hover:bg-rose-950/40"
                     : inv.reminderLevel >= 2
                     ? "bg-slate-900/50 border-rose-900/30 hover:bg-slate-900/80"
                     : "bg-slate-900/50 border-slate-800 hover:bg-slate-900/80"
@@ -550,12 +655,16 @@ export default function AppShell() {
                       className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold border ${
                         inv.status === "PAID"
                           ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                          : inv.status === "NEEDS_REVIEW"
+                          ? "bg-rose-500/20 text-rose-300 border-rose-500/40"
                           : inv.reminderLevel >= 2
                           ? "bg-rose-500/10 text-rose-400 border-rose-500/20"
                           : "bg-amber-500/10 text-amber-400 border-amber-500/20"
                       }`}
                     >
-                      {inv.status} • Due {inv.dueDate}
+                      {inv.status === "NEEDS_REVIEW"
+                        ? "ESCALATED TO HUMAN"
+                        : `${inv.status} • Due ${inv.dueDate}`}
                     </span>
                   </div>
                 </div>
@@ -570,42 +679,95 @@ export default function AppShell() {
                   ))}
                 </div>
 
-                <div className="flex items-center justify-between pt-2 border-t border-slate-800/60 text-xs">
-                  <div className="flex items-center gap-2">
+                {/* Tone Escalation Badge & Controls */}
+                <div className="flex items-center justify-between pt-2.5 border-t border-slate-800/60 text-xs gap-2 flex-wrap">
+                  <div className="flex items-center gap-1.5">
                     {inv.status === "PAID" ? (
                       <span className="text-emerald-400 flex items-center gap-1 font-medium">
                         <CheckCircle2 className="w-3.5 h-3.5" />
                         Settled via PayPal
                       </span>
+                    ) : inv.status === "NEEDS_REVIEW" ? (
+                      <span className="text-rose-400 flex items-center gap-1 font-medium">
+                        <UserCheck className="w-3.5 h-3.5" />
+                        Level 4: Human Review Required
+                      </span>
+                    ) : inv.reminderLevel >= 2 ? (
+                      <button
+                        onClick={() => setInspectingInvoice(inv)}
+                        className="text-rose-400 hover:text-rose-300 flex items-center gap-1 underline underline-offset-2"
+                      >
+                        <AlertTriangle className="w-3.5 h-3.5" />
+                        Level 2: Neutral Notice (Work Paused)
+                      </button>
+                    ) : inv.reminderLevel === 1 ? (
+                      <button
+                        onClick={() => setInspectingInvoice(inv)}
+                        className="text-blue-400 hover:text-blue-300 flex items-center gap-1 underline underline-offset-2"
+                      >
+                        <BellRing className="w-3.5 h-3.5" />
+                        Level 1: Friendly Check-in Dispatched
+                      </button>
                     ) : (
+                      <span className="text-slate-400 flex items-center gap-1">
+                        <Clock className="w-3.5 h-3.5" />
+                        On Track
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Demo Buttons: Time Machine Overdue & Mark Paid */}
+                  <div className="flex items-center gap-1.5 ml-auto">
+                    {inv.status === "SENT" && (
                       <>
                         <button
-                          onClick={() => handleMarkPaid(inv.id)}
-                          disabled={payingInvoiceId === inv.id}
-                          className="px-2.5 py-1 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/30 text-emerald-300 text-[11px] font-medium flex items-center gap-1.5 transition disabled:opacity-50"
+                          onClick={() => handleSimulateOverdue(inv.id)}
+                          disabled={activeActionId === inv.id}
+                          title="Time Machine: Backdate due date to trigger autonomous escalation now!"
+                          className="px-2 py-1 rounded bg-amber-600/20 hover:bg-amber-600/30 border border-amber-500/30 text-amber-300 text-[11px] font-medium flex items-center gap-1 transition disabled:opacity-50"
                         >
-                          {payingInvoiceId === inv.id ? (
+                          {activeActionId === inv.id ? (
                             <Loader2 className="w-3 h-3 animate-spin" />
                           ) : (
-                            <CreditCard className="w-3 h-3" />
+                            <FastForward className="w-3 h-3" />
                           )}
-                          <span>Mark Paid (Webhook Replay)</span>
+                          <span>Simulate Overdue</span>
+                        </button>
+
+                        <button
+                          onClick={() => handleRemindNow(inv.id)}
+                          disabled={activeActionId === inv.id}
+                          title="Manually trigger next escalation reminder"
+                          className="px-2 py-1 rounded bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 text-blue-300 text-[11px] font-medium flex items-center gap-1 transition disabled:opacity-50"
+                        >
+                          <BellRing className="w-3 h-3" />
+                          <span>Remind Now</span>
+                        </button>
+
+                        <button
+                          onClick={() => handleMarkPaid(inv.id)}
+                          disabled={activeActionId === inv.id}
+                          title="Replay PayPal Paid Webhook"
+                          className="px-2 py-1 rounded bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/30 text-emerald-300 text-[11px] font-medium flex items-center gap-1 transition disabled:opacity-50"
+                        >
+                          <CreditCard className="w-3 h-3" />
+                          <span>Mark Paid</span>
                         </button>
                       </>
                     )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-slate-500 font-mono text-[11px]">{inv.paypalInvoiceId}</span>
-                    {inv.paypalPaymentUrl && (
-                      <a
-                        href={inv.paypalPaymentUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        title="View PayPal Sandbox Invoice"
-                      >
-                        <ExternalLink className="w-3 h-3 text-slate-500 hover:text-slate-300 cursor-pointer" />
-                      </a>
-                    )}
+
+                    <div className="flex items-center gap-1 pl-1 border-l border-slate-800">
+                      {inv.paypalPaymentUrl && (
+                        <a
+                          href={inv.paypalPaymentUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          title="View PayPal Sandbox Invoice"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5 text-slate-500 hover:text-slate-300 cursor-pointer" />
+                        </a>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -635,6 +797,7 @@ export default function AppShell() {
               const isPaid = evt.eventType === "WEBHOOK_PAID";
               const isThankYou = evt.eventType === "THANKYOU_SENT";
               const isReminder = evt.eventType === "REMINDER_SENT";
+              const isEscalation = evt.eventType === "ESCALATED_TO_HUMAN";
 
               return (
                 <div
@@ -642,6 +805,8 @@ export default function AppShell() {
                   className={`relative pl-5 border-l-2 ${
                     isPaid || isThankYou
                       ? "border-emerald-500/50"
+                      : isEscalation
+                      ? "border-rose-500/60"
                       : isReminder
                       ? "border-amber-500/50"
                       : "border-blue-500/50"
@@ -651,6 +816,8 @@ export default function AppShell() {
                     className={`absolute -left-[5px] top-1 h-2 w-2 rounded-full ${
                       isPaid || isThankYou
                         ? "bg-emerald-400"
+                        : isEscalation
+                        ? "bg-rose-400"
                         : isReminder
                         ? "bg-amber-400"
                         : "bg-blue-400"
@@ -663,10 +830,12 @@ export default function AppShell() {
                     {evt.eventType === "WEBHOOK_PAID" && `Payment Verified: ${formatCents(evt.payload?.amountCents || 0)}`}
                     {evt.eventType === "THANKYOU_SENT" && "Autonomous Thank-You Note Logged"}
                     {evt.eventType === "INVOICE_SENT" && `Invoice ${evt.payload?.invoiceNumber || ""} Sent via PayPal`}
-                    {evt.eventType === "REMINDER_SENT" && `Level ${evt.payload?.level || 1} Reminder Dispatched`}
+                    {evt.eventType === "REMINDER_SENT" && `Level ${evt.payload?.level || 1} (${evt.payload?.tone}) Reminder Dispatched`}
+                    {evt.eventType === "ESCALATED_TO_HUMAN" && "Chasing Limits Reached — Escalated to Alex"}
+                    {evt.eventType === "RESCHEDULED" && "Time-Machine Simulation Overdue Event"}
                   </p>
                   <p className="text-[11px] text-slate-400 mt-0.5 leading-relaxed">
-                    {evt.payload?.message || evt.payload?.reason || `PayPal Transaction: ${evt.payload?.paypalInvoiceId || evt.id}`}
+                    {evt.payload?.reason || evt.payload?.message || `PayPal: ${evt.payload?.invoiceNumber || evt.id}`}
                   </p>
                 </div>
               );
