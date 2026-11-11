@@ -49,7 +49,7 @@ export function SynexSubpageShell({
   ];
 
   return (
-    <div className="bg-[#FAFBF9] min-h-screen text-[#0D0E11] font-sans pb-20 selection:bg-black selection:text-white">
+    <div className="bg-[#FAFBF9] min-h-screen text-[#0D0E11] font-sans pb-20 selection:bg-[#84CC16]/25 selection:text-inherit">
       {/* ── Subpage Editorial Header ── */}
       <section className="relative pt-12 pb-14 px-6 md:px-12 max-w-7xl mx-auto border-b border-[#E5E7EB]/60">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">

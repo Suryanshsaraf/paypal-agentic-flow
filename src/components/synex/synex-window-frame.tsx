@@ -67,7 +67,7 @@ export function SynexWindowFrame({ children }: SynexWindowFrameProps) {
   ];
 
   return (
-    <div className="min-h-screen bg-[#1c1d20] py-6 px-3 sm:px-6 md:px-10 font-sans selection:bg-black selection:text-white">
+    <div className="min-h-screen bg-[#1c1d20] py-6 px-3 sm:px-6 md:px-10 font-sans selection:bg-[#84CC16]/25 selection:text-inherit">
       {/* ── Outer macOS Floating Window Presentation Frame ── */}
       <div className="max-w-[1380px] mx-auto rounded-[24px] overflow-hidden border border-white/[0.12] bg-[#0E0F12] shadow-[0_30px_90px_rgba(0,0,0,0.7)]">
         {/* ── macOS Window Header Bar ── */}

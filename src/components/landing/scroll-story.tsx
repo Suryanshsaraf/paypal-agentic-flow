@@ -24,8 +24,14 @@ import {
   MessageSquare,
   Lock,
 } from "lucide-react";
-import { LottieCheck } from "@/components/lottie/lottie-animations";
+import {
+  LottieCheck,
+  LottieAutonomousBot,
+  LottieGrowthChart,
+  LottieCoins,
+} from "@/components/lottie/lottie-animations";
 import { MagnetButton } from "@/components/reactbits/magnet-button";
+import GradientASCII from "@/components/reactbits/gradient-ascii";
 
 // ── Shared Motion Tokens ──
 const transitionEase = [0.16, 1, 0.3, 1]; // Premium cubic-bezier
@@ -80,7 +86,24 @@ export function ScrollStory() {
   const answerY = useTransform(askProgress, [0.75, 1], [15, 0]);
 
   return (
-    <div className="bg-[#080B14] text-[#F8FAFC] min-h-screen font-sans selection:bg-[#84CC16] selection:text-black antialiased relative">
+    <div className="bg-[#080B14] text-[#F8FAFC] min-h-screen font-sans selection:bg-[#84CC16] selection:text-black antialiased relative overflow-hidden">
+      {/* ── Ambient Interactive GradientASCII Background (React Bits) ── */}
+      <div className="absolute top-0 left-0 right-0 h-[720px] overflow-hidden pointer-events-auto opacity-35 z-0">
+        <GradientASCII
+          colors={["#080B14", "#172554", "#0284C7", "#84CC16"]}
+          shape="horizon"
+          characters=" =+xX0S8#@"
+          cellSize={18}
+          density={0.8}
+          glow={0.35}
+          speed={0.65}
+          flow={0.5}
+          mouseInteraction={true}
+          clickEffect="wave"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#080B14]/40 to-[#080B14] pointer-events-none" />
+      </div>
+
       {/* ── Sticky Minimal Header ── */}
       <header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
@@ -337,13 +360,15 @@ export function ScrollStory() {
               </div>
 
               {/* Reasoning & Activity Ledger Feed */}
-              <div className="md:col-span-5 p-5 rounded-xl bg-[#111827] border border-[#202B3D] space-y-3">
+              <div className="md:col-span-5 p-5 rounded-xl bg-[#111827] border border-[#202B3D] space-y-4">
                 <div className="flex items-center justify-between text-xs pb-2 border-b border-[#202B3D]">
-                  <span className="font-bold text-white flex items-center gap-1.5">
-                    <Bot className="w-3.5 h-3.5 text-[#84CC16]" />
-                    <span>Agent Reasoning</span>
+                  <span className="font-bold text-white flex items-center gap-2">
+                    <LottieAutonomousBot size={28} className="shrink-0" />
+                    <span>Autonomous Agent Logic</span>
                   </span>
-                  <span className="text-[10px] font-mono text-[#64748B]">Live audit</span>
+                  <span className="text-[10px] font-mono text-[#84CC16] bg-[#84CC16]/10 px-2 py-0.5 rounded-full border border-[#84CC16]/20">
+                    Live Audit
+                  </span>
                 </div>
 
                 <div className="space-y-2 text-xs">
@@ -368,9 +393,14 @@ export function ScrollStory() {
 
       {/* ── 3. Payment Lands (The Settlement Beat) ── */}
       <section className="py-24 px-6 max-w-4xl mx-auto">
-        <div className="p-8 sm:p-10 rounded-3xl bg-[#0D1220] border border-[#10B981]/30 shadow-[0_0_50px_rgba(16,185,129,0.1)] text-center space-y-6">
-          <div className="mx-auto inline-flex items-center justify-center p-3 rounded-full bg-[#10B981]/10 border border-[#10B981]/30">
-            <LottieCheck size={48} />
+        <div className="p-8 sm:p-10 rounded-3xl bg-[#0D1220] border border-[#10B981]/30 shadow-[0_0_50px_rgba(16,185,129,0.1)] text-center space-y-6 relative overflow-hidden">
+          <div className="mx-auto flex items-center justify-center gap-4">
+            <div className="inline-flex items-center justify-center p-3 rounded-full bg-[#10B981]/10 border border-[#10B981]/30">
+              <LottieCheck size={48} />
+            </div>
+            <div className="inline-flex items-center justify-center p-2 rounded-full bg-amber-400/10 border border-amber-400/20">
+              <LottieCoins size={46} />
+            </div>
           </div>
 
           <div className="space-y-2 max-w-lg mx-auto">
@@ -451,13 +481,22 @@ export function ScrollStory() {
 
       {/* ── 5. How It Works, Briefly (3 Statements, Not a Generic Grid) ── */}
       <section id="how-it-works" className="py-20 px-6 max-w-5xl mx-auto border-t border-white/[0.08] space-y-12">
-        <div className="max-w-xl space-y-2">
-          <h3 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-            How it works, in three steps.
-          </h3>
-          <p className="text-sm text-[#94A3B8]">
-            Simple mechanics designed to protect freelancer time and relationships.
-          </p>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="max-w-xl space-y-2">
+            <h3 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+              How it works, in three steps.
+            </h3>
+            <p className="text-sm text-[#94A3B8]">
+              Simple mechanics designed to protect freelancer time and relationships.
+            </p>
+          </div>
+          <div className="p-2.5 rounded-2xl bg-[#0D1220] border border-[#202B3D] flex items-center gap-3 px-4">
+            <LottieGrowthChart size={40} />
+            <div className="text-xs">
+              <span className="block font-bold text-white tabular-nums">+100% Cash Flow</span>
+              <span className="text-[10px] text-[#64748B]">Automated recovery</span>
+            </div>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
