@@ -33,6 +33,7 @@ import {
 } from "@/components/interactive/sound-effects";
 import { LottieCheck } from "@/components/lottie/lottie-animations";
 import { MagnetButton } from "@/components/reactbits/magnet-button";
+import { motion } from "framer-motion";
 
 type TabFilter = "ALL" | "SENT" | "PAID" | "OVERDUE" | "NEEDS_REVIEW";
 
@@ -477,26 +478,40 @@ function InvoicesContent() {
 
         {/* ── Filters & Search ── */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-1 bg-[#F1F3F5] p-1 rounded-xl">
-            {(["ALL", "SENT", "PAID", "OVERDUE", "NEEDS_REVIEW"] as TabFilter[]).map((tab) => (
-              <button
-                key={tab}
-                onClick={() => {
-                  playSoftClick();
-                  setFilter(tab);
-                }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                  filter === tab
-                    ? "bg-white text-[#0D0E11] shadow-2xs font-semibold"
-                    : "text-[#6B7280] hover:text-[#0D0E11]"
-                }`}
-              >
-                <span>{tab === "NEEDS_REVIEW" ? "Review" : tab.charAt(0) + tab.slice(1).toLowerCase()}</span>
-                {tabCounts[tab] > 0 && (
-                  <span className="ml-1 text-[10px] font-mono opacity-70">[{tabCounts[tab]}]</span>
-                )}
-              </button>
-            ))}
+          <div className="flex items-center gap-1 bg-[#F1F3F5] p-1 rounded-xl relative">
+            {(["ALL", "SENT", "PAID", "OVERDUE", "NEEDS_REVIEW"] as TabFilter[]).map((tab) => {
+              const isCurrent = filter === tab;
+              return (
+                <button
+                  key={tab}
+                  onClick={() => {
+                    playSoftClick();
+                    setFilter(tab);
+                  }}
+                  className={`relative px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                    isCurrent
+                      ? "text-[#0D0E11] font-semibold"
+                      : "text-[#6B7280] hover:text-[#0D0E11]"
+                  }`}
+                >
+                  {isCurrent && (
+                    <motion.div
+                      layoutId="activeInvoiceFilterTab"
+                      transition={{ type: "spring", stiffness: 450, damping: 35 }}
+                      className="absolute inset-0 bg-white rounded-lg shadow-2xs -z-0"
+                    />
+                  )}
+                  <span className="relative z-10">
+                    {tab === "NEEDS_REVIEW" ? "Review" : tab.charAt(0) + tab.slice(1).toLowerCase()}
+                  </span>
+                  {tabCounts[tab] > 0 && (
+                    <span className="relative z-10 ml-1 text-[10px] font-mono opacity-70">
+                      [{tabCounts[tab]}]
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
 
           <div className="relative">

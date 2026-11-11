@@ -37,6 +37,7 @@ export default function PayPalSandboxPayerViewPage() {
   const [error, setError] = useState<string | null>(null);
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const [isPaying, setIsPaying] = useState(false);
+  const [isLaunchingPayPal, setIsLaunchingPayPal] = useState(false);
   const [paidSuccess, setPaidSuccess] = useState(false);
 
   const fetchInvoice = useCallback(async () => {
@@ -63,7 +64,36 @@ export default function PayPalSandboxPayerViewPage() {
     fetchInvoice();
   }, [fetchInvoice]);
 
-  // Handle Sandbox Payment
+  // Launch Authentic PayPal Sandbox Checkout
+  async function handleLaunchLivePayPal() {
+    if (!invoice) return;
+    playSoftClick();
+    setIsLaunchingPayPal(true);
+    toast.info("Connecting to live PayPal Sandbox session...");
+
+    try {
+      const res = await fetch("/api/paypal/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ invoiceId: invoice.id }),
+      });
+      const data = await res.json();
+
+      if (!data.ok || !data.approveUrl) {
+        toast.error(data.error || "Failed to initiate PayPal checkout");
+        return;
+      }
+
+      toast.success("Redirecting to PayPal Sandbox Checkout...");
+      window.location.href = data.approveUrl;
+    } catch (err: any) {
+      toast.error(err?.message || "Error contacting PayPal API");
+    } finally {
+      setIsLaunchingPayPal(false);
+    }
+  }
+
+  // Handle Sandbox Simulated Payment
   async function handleCompletePayment() {
     if (!invoice) return;
     playSoftClick();
@@ -249,11 +279,15 @@ export default function PayPalSandboxPayerViewPage() {
               <div className="space-y-1">
                 <span className="text-[10px] font-mono uppercase tracking-wider text-[#687173]">Invoicer</span>
                 <h1 className="text-xl sm:text-2xl font-bold text-[#0C0C0D] flex items-center gap-2">
-                  <span>Morgan Creative Labs</span>
+                  <span>GetPaid AR</span>
                   <ShieldCheck className="w-4 h-4 text-[#0079C1]" />
                 </h1>
-                <p className="text-xs text-[#687173]">alex@morgancreative.io · Verified Sandbox Merchant</p>
-                <p className="text-xs text-[#687173]">San Francisco, CA · United States</p>
+                <p className="text-xs text-[#687173]">
+                  suryanshsaraf8@gmail.com · saiarihara@gmail.com · Verified Sandbox Merchant
+                </p>
+                <p className="text-xs text-[#687173] font-mono">
+                  PayPal ID: sb-tgbtt53851838@business.example.com (IN)
+                </p>
               </div>
 
               {/* Invoice Meta */}
@@ -395,55 +429,68 @@ export default function PayPalSandboxPayerViewPage() {
             {!isPaid ? (
               <div className="max-w-md mx-auto space-y-4 text-center">
                 <div className="space-y-1">
-                  <span className="text-xs font-semibold text-[#0C0C0D]">Choose Payment Method</span>
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-medium mb-1">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span>Live PayPal Sandbox API Connected</span>
+                  </div>
+                  <h3 className="text-sm font-bold text-[#0C0C0D]">Complete Settlement via PayPal</h3>
                   <p className="text-[11px] text-[#687173]">
-                    Sandbox simulated payment sends instant <code className="bg-[#E2E8F0] px-1 py-0.5 rounded font-mono text-[10px]">INVOICING.INVOICE.PAID</code> webhook to GetPaid.
+                    Choose authentic PayPal checkout on <code className="bg-[#E2E8F0] px-1 py-0.5 rounded font-mono text-[10px]">sandbox.paypal.com</code> or instant demo simulation.
                   </p>
                 </div>
 
-                {/* Primary PayPal Gold Button */}
+                {/* Primary Official PayPal Button */}
                 <button
-                  onClick={() => {
-                    playSoftClick();
-                    setShowCheckoutModal(true);
-                  }}
+                  disabled={isLaunchingPayPal}
+                  onClick={handleLaunchLivePayPal}
                   className="w-full py-3.5 px-6 rounded-full bg-[#FFC439] hover:bg-[#F2BA36] text-[#003087] font-bold text-sm shadow-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer border border-[#E0A824]"
                 >
-                  {/* PayPal Logo */}
-                  <svg className="h-5 w-auto" viewBox="0 0 100 32" fill="none">
-                    <path
-                      d="M11.66 3.5H4.25C3.86 3.5 3.53 3.79 3.47 4.18L0.03 26.04C-0.03 26.37 0.22 26.66 0.56 26.66H4.27C4.66 26.66 4.99 26.37 5.05 25.98L6.2 18.68C6.26 18.29 6.59 18 6.98 18H9.36C14.7 18 17.74 15.42 18.52 10.45C18.86 8.31 18.42 6.58 17.27 5.37C16.03 4.09 14.07 3.5 11.66 3.5Z"
-                      fill="#003087"
-                    />
-                    <path
-                      d="M27.66 10.5H20.25C19.86 10.5 19.53 10.79 19.47 11.18L17.2 25.56C17.14 25.95 17.47 26.24 17.86 26.24H21.57C21.96 26.24 22.29 25.95 22.35 25.56L23.2 20.18C23.26 19.79 23.59 19.5 23.98 19.5H25.36C30.7 19.5 33.74 16.92 34.52 11.95C34.86 9.81 34.42 8.08 33.27 6.87C32.03 5.59 30.07 5 27.66 5Z"
-                      fill="#0079C1"
-                    />
-                    <text x="38" y="22" fontFamily="sans-serif" fontWeight="bold" fontSize="18" fill="#003087">
-                      Pay with PayPal
-                    </text>
-                  </svg>
+                  {isLaunchingPayPal ? (
+                    <>
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#003087] border-t-transparent" />
+                      <span>Minting Live PayPal Checkout...</span>
+                    </>
+                  ) : (
+                    <>
+                      {/* PayPal Monogram */}
+                      <svg className="h-5 w-auto shrink-0" viewBox="0 0 100 32" fill="none">
+                        <path
+                          d="M11.66 3.5H4.25C3.86 3.5 3.53 3.79 3.47 4.18L0.03 26.04C-0.03 26.37 0.22 26.66 0.56 26.66H4.27C4.66 26.66 4.99 26.37 5.05 25.98L6.2 18.68C6.26 18.29 6.59 18 6.98 18H9.36C14.7 18 17.74 15.42 18.52 10.45C18.86 8.31 18.42 6.58 17.27 5.37C16.03 4.09 14.07 3.5 11.66 3.5Z"
+                          fill="#003087"
+                        />
+                        <path
+                          d="M27.66 10.5H20.25C19.86 10.5 19.53 10.79 19.47 11.18L17.2 25.56C17.14 25.95 17.47 26.24 17.86 26.24H21.57C21.96 26.24 22.29 25.95 22.35 25.56L23.2 20.18C23.26 19.79 23.59 19.5 23.98 19.5H25.36C30.7 19.5 33.74 16.92 34.52 11.95C34.86 9.81 34.42 8.08 33.27 6.87C32.03 5.59 30.07 5 27.66 5Z"
+                          fill="#0079C1"
+                        />
+                        <text x="38" y="22" fontFamily="sans-serif" fontWeight="bold" fontSize="18" fill="#003087">
+                          PayPal
+                        </text>
+                      </svg>
+                      <span className="font-semibold text-xs ml-1">(Live sandbox.paypal.com)</span>
+                      <ExternalLink className="w-3.5 h-3.5 text-[#003087] ml-auto shrink-0" />
+                    </>
+                  )}
                 </button>
 
-                {/* Secondary Debit/Card Button */}
+                {/* Secondary 1-Click Simulation Button */}
                 <button
                   onClick={() => {
                     playSoftClick();
                     setShowCheckoutModal(true);
                   }}
-                  className="w-full py-3.5 px-6 rounded-full bg-[#0D0E11] hover:bg-[#26282B] text-white font-semibold text-xs shadow-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full py-3 px-6 rounded-full bg-[#0D0E11] hover:bg-[#26282B] text-white font-semibold text-xs shadow-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <CreditCard className="w-4 h-4 text-white/80" />
-                  <span>Debit or Credit Card</span>
+                  <Sparkles className="w-3.5 h-3.5 text-[#84CC16]" />
+                  <span>Simulate Instant Settlement (1-Click Webhook)</span>
                 </button>
 
-                <div className="flex items-center justify-center gap-4 pt-2 text-[11px] text-[#687173]">
+                <div className="flex items-center justify-center gap-4 pt-1 text-[11px] text-[#687173]">
                   <span className="flex items-center gap-1">
                     <ShieldCheck className="w-3.5 h-3.5 text-[#10B981]" />
-                    <span>PayPal Buyer Protection</span>
+                    <span>Real SSL &amp; TLS 1.3 Rail</span>
                   </span>
                   <span>·</span>
-                  <span>Instant Settlement</span>
+                  <span>Zero Guesswork Settlement</span>
                 </div>
               </div>
             ) : (
@@ -475,7 +522,10 @@ export default function PayPalSandboxPayerViewPage() {
           <p>
             PayPal Sandbox Testing Environment · Powered by GetPaid Autonomous Accounts-Receivable Agent
           </p>
-          <div className="flex items-center justify-center gap-4 text-[11px]">
+          <p className="text-[11px] text-[#687173]">
+            Co-founded by Suryansh Saraf (<a href="mailto:suryanshsaraf8@gmail.com" className="text-[#003087] hover:underline font-mono">suryanshsaraf8@gmail.com</a>) &amp; Sai Arihara (<a href="mailto:saiarihara@gmail.com" className="text-[#003087] hover:underline font-mono">saiarihara@gmail.com</a>)
+          </p>
+          <div className="flex items-center justify-center gap-4 text-[11px] pt-1">
             <Link href="/" className="hover:text-[#0C0C0D] underline">
               Landing Page
             </Link>

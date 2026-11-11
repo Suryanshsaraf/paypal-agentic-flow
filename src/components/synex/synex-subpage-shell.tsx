@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { motion } from "framer-motion";
 import {
   Search,
   ChevronRight,
@@ -55,7 +56,10 @@ export function SynexSubpageShell({
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div className="space-y-3 max-w-2xl">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#EAEFE6] text-[#365314] text-xs font-mono uppercase tracking-wider">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#84CC16] animate-pulse" />
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#84CC16] opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#84CC16]"></span>
+              </span>
               <span>{badge}</span>
             </div>
 
@@ -73,19 +77,24 @@ export function SynexSubpageShell({
         </div>
       </section>
 
-      {/* ── Main Split-Glass Workspace ── */}
+      {/* ── Main Split-Glass Workspace (Balanced Color Coordination) ── */}
       <section className="px-4 sm:px-8 md:px-12 max-w-[1340px] mx-auto mt-8">
-        <div className="rounded-[28px] overflow-hidden border border-[#E5E7EB] shadow-[0_30px_90px_rgba(0,0,0,0.14)] bg-white grid grid-cols-1 lg:grid-cols-12 min-h-[720px]">
-          {/* Left Dark Glass Sidebar (Matching User Attachment 2) */}
-          <div className="lg:col-span-4 bg-[#1A1C1E] text-white p-6 sm:p-7 flex flex-col justify-between border-r border-[#2A2C30]">
+        <div className="rounded-[28px] overflow-hidden border border-[#E2E8F0] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.08)] bg-white grid grid-cols-1 lg:grid-cols-12 min-h-[720px]">
+          {/* Left Refined Dark Slate Sidebar */}
+          <div className="lg:col-span-4 bg-[#11141D] text-white p-6 sm:p-7 flex flex-col justify-between border-r border-white/[0.08] relative">
             <div className="space-y-6">
               {/* Product Identity */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <span className="h-2.5 w-2.5 rounded-full bg-[#84CC16] shadow-[0_0_8px_#84CC16]" />
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#84CC16] opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#84CC16] shadow-[0_0_8px_#84CC16]"></span>
+                  </span>
                   <span className="font-bold text-sm tracking-wide text-white">GetPaid AR</span>
                 </div>
-                <span className="text-[11px] font-mono text-[#9CA3AF]">v2.4</span>
+                <span className="text-[11px] font-mono text-[#9CA3AF] bg-white/[0.06] px-2 py-0.5 rounded-full border border-white/[0.08]">
+                  v2.4 Live
+                </span>
               </div>
 
               {/* Search Accounts */}
@@ -96,12 +105,12 @@ export function SynexSubpageShell({
                   placeholder="Search accounts..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full bg-[#24262B] border border-white/[0.08] rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-[#6B7280] focus:outline-none focus:border-[#84CC16] transition-colors"
+                  className="w-full bg-white/[0.05] border border-white/[0.08] rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-[#6B7280] focus:outline-none focus:border-[#84CC16] transition-colors"
                 />
               </div>
 
-              {/* Navigation Menu */}
-              <nav className="space-y-1">
+              {/* Navigation Menu with Smooth Sliding Indicator */}
+              <nav className="space-y-1 relative">
                 {navLinks.map((item) => {
                   const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
                   return (
@@ -109,15 +118,22 @@ export function SynexSubpageShell({
                       key={item.href}
                       href={item.href}
                       onClick={() => playSoftClick()}
-                      className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                      className={`relative w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                         isActive
-                          ? "bg-[#2A2C30] text-white shadow-sm"
+                          ? "text-white"
                           : "text-[#9CA3AF] hover:text-white hover:bg-white/[0.04]"
                       }`}
                     >
-                      <span>{item.label}</span>
+                      {isActive && (
+                        <motion.div
+                          layoutId="subpage-active-nav-pill"
+                          transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                          className="absolute inset-0 bg-white/[0.12] rounded-xl border border-white/[0.1] -z-0"
+                        />
+                      )}
+                      <span className="relative z-10">{item.label}</span>
                       {isActive ? (
-                        <span className="text-[11px] font-mono text-[#84CC16]">[ Active ]</span>
+                        <span className="relative z-10 text-[11px] font-mono text-[#84CC16]">[ Active ]</span>
                       ) : (
                         <ChevronRight className="w-3.5 h-3.5 text-[#6B7280]" />
                       )}
@@ -126,11 +142,17 @@ export function SynexSubpageShell({
                 })}
               </nav>
 
-              {/* Autonomous Chasing Cadence Protocol (Matching Attachment 2) */}
+              {/* Autonomous Chasing Cadence Protocol */}
               <div className="pt-2 border-t border-white/[0.08] space-y-3">
                 <div className="flex items-center justify-between text-[11px] font-mono text-[#9CA3AF] tracking-wider uppercase">
                   <span>Autonomous Chasing</span>
-                  <span className="text-[#84CC16]">Active</span>
+                  <span className="inline-flex items-center gap-1.5 text-[#84CC16]">
+                    <span className="relative flex h-1.5 w-1.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#84CC16] opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#84CC16]"></span>
+                    </span>
+                    <span>ACTIVE</span>
+                  </span>
                 </div>
 
                 <div className="space-y-2 text-xs">
@@ -160,22 +182,28 @@ export function SynexSubpageShell({
               {sidebarExtra && <div className="pt-2 border-t border-white/[0.08]">{sidebarExtra}</div>}
             </div>
 
-            {/* Bottom Status Tile */}
+            {/* Bottom Status Tile: Live PayPal Sandbox Connection */}
             <div className="pt-6 border-t border-white/[0.08]">
-              <div className="p-3.5 rounded-2xl bg-[#24262B] border border-white/[0.06] space-y-2">
+              <div className="p-3.5 rounded-2xl bg-white/[0.04] border border-white/[0.08] space-y-2">
                 <div className="flex items-center justify-between text-[11px] font-mono">
-                  <span className="text-[#9CA3AF]">PAYPAL V2 INVOICING</span>
+                  <span className="text-[#9CA3AF] flex items-center gap-1.5">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
+                    </span>
+                    <span>PAYPAL LIVE SANDBOX</span>
+                  </span>
                   <span className="text-[#84CC16] font-bold">100% OK</span>
                 </div>
-                <div className="text-[11px] text-[#6B7280] leading-snug">
-                  Automatic sandbox webhook listener & minor-unit arithmetic synchronized.
+                <div className="text-[11px] text-[#9CA3AF] leading-snug">
+                  Connected to <span className="font-mono text-white/90">sb-tgbtt53851838@business.example.com</span>. Webhooks &amp; minor-unit arithmetic synchronized.
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Right Crisp White Surface */}
-          <div className="lg:col-span-8 bg-white p-6 sm:p-8 flex flex-col justify-between">
+          {/* Right Clean Crisp Surface */}
+          <div className="lg:col-span-8 bg-[#FCFDFE] p-6 sm:p-8 flex flex-col justify-between">
             {children}
           </div>
         </div>

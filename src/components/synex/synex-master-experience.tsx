@@ -676,6 +676,30 @@ export function SynexMasterExperience({
           </div>
         </div>
       </section>
+
+      {/* ── 5. Co-Founders & PayPal AI Hackathon Footer ── */}
+      <footer className="py-12 px-6 md:px-12 border-t border-[#E5E7EB] bg-[#FAFBF9] text-center text-xs text-[#6B7280]">
+        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-[#0D0E11]">getpaid.</span>
+            <span>· Built for the PayPal AI Hackathon</span>
+          </div>
+          <div className="flex items-center gap-6 font-mono text-[11px]">
+            <a
+              href="mailto:suryanshsaraf8@gmail.com"
+              className="text-[#0D0E11] hover:text-[#84CC16] transition-colors underline underline-offset-4"
+            >
+              suryanshsaraf8@gmail.com
+            </a>
+            <a
+              href="mailto:saiarihara@gmail.com"
+              className="text-[#0D0E11] hover:text-[#84CC16] transition-colors underline underline-offset-4"
+            >
+              saiarihara@gmail.com
+            </a>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

@@ -20,7 +20,7 @@ export default function RootLayout({
       lang="en"
       className={`dark ${GeistSans.variable} ${GeistMono.variable}`}
     >
-      <body className="bg-bg-primary text-text-primary font-sans antialiased selection:bg-accent/40 selection:text-white">
+      <body className="bg-bg-primary text-text-primary font-sans antialiased selection:bg-[#84CC16]/30 selection:text-inherit">
         {children}
         <Toaster
           theme="dark"

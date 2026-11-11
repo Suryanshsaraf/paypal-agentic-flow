@@ -204,6 +204,7 @@ async function callPayPalApi<T>(
 /**
  * Create a PayPal Invoicing v2 Draft Invoice
  * Endpoint: POST /v2/invoicing/invoices
+ * Automatically falls back to live PayPal Orders v2 if invoicing scope is restricted.
  */
 export async function createPayPalInvoice(draft: PayPalInvoiceDraft): Promise<PayPalInvoiceResponse> {
   const { isLiveSandbox } = await getPayPalAccessToken();
@@ -243,11 +244,10 @@ export async function createPayPalInvoice(draft: PayPalInvoiceDraft): Promise<Pa
     },
     invoicer: {
       name: {
-        given_name: "Alex",
-        surname: "Morgan",
+        given_name: "GetPaid",
+        surname: "Merchant",
       },
       business_name: "Morgan Creative Labs",
-      email_address: "alex@morgancreative.io",
     },
     primary_recipients: [
       {
@@ -268,7 +268,29 @@ export async function createPayPalInvoice(draft: PayPalInvoiceDraft): Promise<Pa
   });
 
   if (!res.ok) {
-    console.warn("[PayPal createInvoice error]", res.errorText);
+    console.warn("[PayPal Invoicing v2 response]:", res.errorText);
+    console.log("[PayPal Invoicing] Falling back to live PayPal Orders v2 checkout session...");
+    
+    // Automatically create live PayPal Order v2 session
+    const totalCents = draft.items.reduce((sum, item) => sum + item.unitPriceCents * item.quantity, 0);
+    const orderRes = await createPayPalCheckoutOrder({
+      invoiceNumber: draft.invoiceNumber,
+      amountCents: totalCents,
+      currency: draft.currency,
+      description: draft.note || `GetPaid Invoice ${draft.invoiceNumber}`,
+      items: draft.items,
+    });
+
+    if (orderRes.ok && orderRes.orderId && orderRes.approveUrl) {
+      return {
+        id: orderRes.orderId,
+        status: "DRAFT",
+        invoiceNumber: draft.invoiceNumber,
+        paymentUrl: orderRes.approveUrl,
+        isSimulated: orderRes.isSimulated || false,
+      };
+    }
+
     const simId = `INV2-ERR-FB-${Date.now().toString().slice(-6)}`;
     return {
       id: simId,
@@ -294,6 +316,96 @@ export async function createPayPalInvoice(draft: PayPalInvoiceDraft): Promise<Pa
 }
 
 /**
+ * Create Live PayPal Checkout Order (Orders v2 API)
+ * Endpoint: POST /v2/checkout/orders
+ * Returns official approve link: https://www.sandbox.paypal.com/checkoutnow?token=...
+ */
+export async function createPayPalCheckoutOrder(params: {
+  invoiceNumber: string;
+  amountCents: number;
+  currency?: string;
+  description?: string;
+  items?: Array<{ name: string; quantity: number; unitPriceCents: number; description?: string }>;
+  returnUrl?: string;
+  cancelUrl?: string;
+}): Promise<{ ok: boolean; orderId?: string; approveUrl?: string; error?: string; isSimulated?: boolean }> {
+  const { isLiveSandbox } = await getPayPalAccessToken();
+
+  if (!isLiveSandbox) {
+    const simOrderId = `ORDER-SIM-${Date.now().toString().slice(-6)}`;
+    return {
+      ok: true,
+      orderId: simOrderId,
+      approveUrl: `/pay/${params.invoiceNumber}`,
+      isSimulated: true,
+    };
+  }
+
+  const currency = params.currency || "USD";
+  const totalValue = centsToDecimalString(params.amountCents);
+
+  const purchaseUnit: any = {
+    reference_id: params.invoiceNumber,
+    description: params.description || `GetPaid Invoice ${params.invoiceNumber}`,
+    amount: {
+      currency_code: currency,
+      value: totalValue,
+    },
+  };
+
+  if (params.items && params.items.length > 0) {
+    purchaseUnit.amount.breakdown = {
+      item_total: {
+        currency_code: currency,
+        value: totalValue,
+      },
+    };
+    purchaseUnit.items = params.items.map((it) => ({
+      name: it.name,
+      description: it.description || it.name,
+      quantity: it.quantity.toString(),
+      unit_amount: {
+        currency_code: currency,
+        value: centsToDecimalString(it.unitPriceCents),
+      },
+    }));
+  }
+
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const return_url = params.returnUrl || `${baseUrl}/pay/${params.invoiceNumber}?status=success`;
+  const cancel_url = params.cancelUrl || `${baseUrl}/pay/${params.invoiceNumber}?status=cancelled`;
+
+  const payload = {
+    intent: "CAPTURE",
+    purchase_units: [purchaseUnit],
+    application_context: {
+      brand_name: "GetPaid AR",
+      landing_page: "BILLING",
+      user_action: "PAY_NOW",
+      return_url,
+      cancel_url,
+    },
+  };
+
+  const res = await callPayPalApi<any>("/v2/checkout/orders", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok || !res.data) {
+    return { ok: false, error: res.errorText || "Failed to create PayPal order" };
+  }
+
+  const approveLink = res.data.links?.find((l: any) => l.rel === "approve")?.href;
+  return {
+    ok: true,
+    orderId: res.data.id,
+    approveUrl: approveLink || `https://www.sandbox.paypal.com/checkoutnow?token=${res.data.id}`,
+    isSimulated: false,
+  };
+}
+
+/**
  * Send a PayPal Invoicing v2 Invoice
  * Endpoint: POST /v2/invoicing/invoices/{id}/send
  */
@@ -302,6 +414,11 @@ export async function sendPayPalInvoice(paypalInvoiceId: string): Promise<{ succ
 
   if (!isLiveSandbox) {
     return { success: true, isSimulated: true };
+  }
+
+  // If this is an Orders v2 ID (not starting with INV2-), it is already live and ready on PayPal Sandbox
+  if (!paypalInvoiceId.startsWith("INV2-")) {
+    return { success: true, isSimulated: false };
   }
 
   const res = await callPayPalApi(`/v2/invoicing/invoices/${paypalInvoiceId}/send`, {

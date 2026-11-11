@@ -63,10 +63,10 @@
     font-feature-settings: "tnum" 1;
   }
 
-  /* Selection */
+  /* Selection: clean subtle lime highlight */
   ::selection {
-    background: rgba(99, 102, 241, 0.4);
-    color: #F8FAFC;
+    background: rgba(132, 204, 22, 0.3);
+    color: inherit;
   }
 }
 
