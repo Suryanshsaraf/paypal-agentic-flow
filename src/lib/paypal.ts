@@ -214,7 +214,7 @@ export async function createPayPalInvoice(draft: PayPalInvoiceDraft): Promise<Pa
       id: simId,
       status: "DRAFT",
       invoiceNumber: draft.invoiceNumber,
-      paymentUrl: `https://www.sandbox.paypal.com/invoice/p/#${simId}`,
+      paymentUrl: `/pay/${simId}`,
       isSimulated: true,
     };
   }
@@ -274,19 +274,21 @@ export async function createPayPalInvoice(draft: PayPalInvoiceDraft): Promise<Pa
       id: simId,
       status: "DRAFT",
       invoiceNumber: draft.invoiceNumber,
-      paymentUrl: `https://www.sandbox.paypal.com/invoice/p/#${simId}`,
+      paymentUrl: `/pay/${simId}`,
       isSimulated: true,
     };
   }
 
-  // Live PayPal response returns { id, status, href }
+  // Live PayPal response returns { id, status, href, links }
   const invId = res.data?.id || `INV2-${Date.now()}`;
+  const payerLink = res.data?.links?.find((l: any) => l.rel === "payer-view")?.href;
+  const paymentUrl = payerLink || `https://www.sandbox.paypal.com/invoice/payerView/details/${invId}`;
   return {
     id: invId,
     status: "DRAFT",
     invoiceNumber: draft.invoiceNumber,
     href: res.data?.href,
-    paymentUrl: `https://www.sandbox.paypal.com/invoice/p/#${invId}`,
+    paymentUrl,
     isSimulated: false,
   };
 }

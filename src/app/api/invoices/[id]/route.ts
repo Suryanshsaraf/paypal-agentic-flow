@@ -9,7 +9,16 @@ export async function GET(
 ) {
   try {
     const id = params.id;
-    const invoice = db.getInvoice(id);
+    let invoice = db.getInvoice(id);
+
+    // Also attempt lookup by PayPal Invoice ID or invoice number if not found by primary key
+    if (!invoice) {
+      invoice = db.findInvoiceByPaypalId(id);
+    }
+    if (!invoice) {
+      const all = db.listInvoices();
+      invoice = all.find((i) => i.invoiceNumber.toLowerCase() === id.toLowerCase());
+    }
 
     if (!invoice) {
       return NextResponse.json(

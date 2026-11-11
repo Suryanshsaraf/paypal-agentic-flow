@@ -1,6 +1,7 @@
 "use client";
 
 import React, { Suspense, useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import {
   FileText,
   Plus,
@@ -641,17 +642,15 @@ function InvoicesContent() {
                         </div>
                       )}
 
-                      {inv.paypalPaymentUrl && (
-                        <a
-                          href={inv.paypalPaymentUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-[#9CA3AF] hover:text-[#0D0E11] transition-colors p-1"
-                          title="Open PayPal Sandbox Invoice"
-                        >
-                          <ExternalLink className="w-4 h-4" />
-                        </a>
-                      )}
+                      <Link
+                        href={`/pay/${inv.id}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-[#6B7280] hover:text-[#003087] transition-colors p-1.5 rounded-md hover:bg-black/5"
+                        title="Open PayPal Sandbox Invoice"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                      </Link>
                     </div>
                   </div>
 
@@ -675,6 +674,22 @@ function InvoicesContent() {
                           <span className="text-[10px] uppercase font-mono text-[#6B7280] block">Deliverables Status</span>
                           <span className="font-medium text-[#0D0E11]">{inv.workStatus}</span>
                         </div>
+                      </div>
+
+                      {/* Detail Footer Actions */}
+                      <div className="pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-[#EBECE9]">
+                        <div className="text-[11px] text-[#6B7280] flex items-center gap-1.5">
+                          <span className="h-1.5 w-1.5 rounded-full bg-[#10B981]" />
+                          <span>PayPal Invoicing v2 Reference: <code className="font-mono text-[#0D0E11]">{inv.paypalInvoiceId || "INV2-SANDBOX"}</code></span>
+                        </div>
+                        <Link
+                          href={`/pay/${inv.id}`}
+                          target="_blank"
+                          className="px-3.5 py-1.5 rounded-lg bg-[#003087] hover:bg-[#00246B] text-white text-xs font-semibold shadow-xs transition-all flex items-center gap-1.5 active:scale-95"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5 text-[#FFC439]" />
+                          <span>Open PayPal Sandbox Payer View</span>
+                        </Link>
                       </div>
 
                       {/* Reminder Audit Trail */}

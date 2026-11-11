@@ -661,16 +661,15 @@ export function SynexMasterExperience({
                     </div>
                   )}
 
-                  {inv.paypalPaymentUrl && (
-                    <a
-                      href={inv.paypalPaymentUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-[#9CA3AF] hover:text-[#0D0E11] transition-colors p-1"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                    </a>
-                  )}
+                  <Link
+                    href={`/pay/${inv.id}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[#6B7280] hover:text-[#003087] transition-colors p-1.5 rounded-md hover:bg-black/5"
+                    title="Open PayPal Sandbox Invoice"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                  </Link>
                 </div>
               </div>
             ))}

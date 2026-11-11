@@ -155,10 +155,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const paymentUrl = ppInvoice.isSimulated
+      ? `/pay/${invoice.id}`
+      : ppInvoice.paymentUrl || `/pay/${invoice.id}`;
+
     // Update with PayPal invoice ID
     invoice = db.updateInvoice(invoice.id, {
       paypalInvoiceId: ppInvoice.id,
-      paypalPaymentUrl: ppInvoice.paymentUrl,
+      paypalPaymentUrl: paymentUrl,
     })!;
 
     // 7. PayPal Send
@@ -211,7 +215,7 @@ export async function POST(req: NextRequest) {
       client,
       paypal: {
         id: ppInvoice.id,
-        paymentUrl: ppInvoice.paymentUrl,
+        paymentUrl: invoice.paypalPaymentUrl || ppInvoice.paymentUrl,
         sent: sendResult.success,
         isSimulated: ppInvoice.isSimulated,
       },
