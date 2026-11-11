@@ -195,16 +195,26 @@ export function SynexWindowFrame({ children }: SynexWindowFrameProps) {
               <span className="text-xs font-mono uppercase text-[#6B7280] tracking-wider block">
                 Mail us
               </span>
-              <a
-                href="mailto:suryanshsaraf@gmail.com"
-                className="text-sm font-semibold text-white hover:text-[#84CC16] transition-colors flex items-center gap-1.5 group"
-              >
-                <Mail className="w-3.5 h-3.5 text-[#84CC16]" />
-                <span className="underline underline-offset-4">suryanshsaraf@gmail.com</span>
-                <ExternalLink className="w-3 h-3 text-[#6B7280] group-hover:text-[#84CC16] transition-colors" />
-              </a>
-              <p className="text-xs text-[#6B7280]">
-                Direct founder contact for product inquiries & partnerships.
+              <div className="space-y-1.5">
+                <a
+                  href="mailto:suryanshsaraf8@gmail.com"
+                  className="text-xs font-semibold text-white hover:text-[#84CC16] transition-colors flex items-center gap-1.5 group"
+                >
+                  <Mail className="w-3.5 h-3.5 text-[#84CC16] shrink-0" />
+                  <span className="underline underline-offset-4 font-mono">suryanshsaraf8@gmail.com</span>
+                  <ExternalLink className="w-3 h-3 text-[#6B7280] group-hover:text-[#84CC16] transition-colors" />
+                </a>
+                <a
+                  href="mailto:saiarihara@gmail.com"
+                  className="text-xs font-semibold text-white hover:text-[#84CC16] transition-colors flex items-center gap-1.5 group"
+                >
+                  <Mail className="w-3.5 h-3.5 text-[#84CC16] shrink-0" />
+                  <span className="underline underline-offset-4 font-mono">saiarihara@gmail.com</span>
+                  <ExternalLink className="w-3 h-3 text-[#6B7280] group-hover:text-[#84CC16] transition-colors" />
+                </a>
+              </div>
+              <p className="text-[11px] text-[#6B7280] pt-1">
+                Founders & engineering lead contacts.
               </p>
             </div>
 

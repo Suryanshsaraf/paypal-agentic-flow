@@ -604,42 +604,59 @@ export function SynexMasterExperience({
                       <span className="text-xs text-[#6B7280]">({inv.client.company})</span>
                     )}
                     <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                      className={`inline-flex items-center gap-1.5 text-[11px] font-mono px-2 py-0.5 rounded-full ${
                         inv.status === "PAID"
-                          ? "bg-emerald-100 text-emerald-800"
+                          ? "bg-[#ECFDF5] text-[#065F46] border border-[#A7F3D0]"
                           : inv.status === "NEEDS_REVIEW"
-                          ? "bg-rose-100 text-rose-800"
-                          : "bg-amber-100 text-amber-800"
+                          ? "bg-[#FFE4E6] text-[#9F1239] border border-[#FECDD3]"
+                          : "bg-[#FEF3C7] text-[#92400E] border border-[#FDE68A]"
                       }`}
                     >
-                      {inv.status}
+                      <span
+                        className={`h-1.5 w-1.5 rounded-full ${
+                          inv.status === "PAID"
+                            ? "bg-[#10B981]"
+                            : inv.status === "NEEDS_REVIEW"
+                            ? "bg-[#DC2626]"
+                            : "bg-[#F59E0B]"
+                        }`}
+                      />
+                      <span>{inv.status}</span>
                     </span>
                   </div>
-                  <div className="text-xs text-[#6B7280] font-mono mt-0.5">
-                    {inv.invoiceNumber} • Due {inv.dueDate} • Level {inv.reminderLevel} ({inv.workStatus})
+                  <div className="text-xs text-[#6B7280] font-mono mt-0.5 flex items-center gap-2">
+                    <span className="font-semibold text-[#374151] whitespace-nowrap">{inv.invoiceNumber}</span>
+                    <span className="text-[#D1D5DB]">•</span>
+                    <span className="whitespace-nowrap">Due {inv.dueDate}</span>
+                    <span className="text-[#D1D5DB]">•</span>
+                    <span className="text-[#4B5563]">Lvl {inv.reminderLevel} ({inv.workStatus})</span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <span className="text-base font-black text-[#0D0E11] tabular-nums">
-                    {formatCents(inv.amountTotalCents)}
-                  </span>
+                <div className="flex items-center gap-3 shrink-0">
+                  <div className="text-right whitespace-nowrap">
+                    <span className="text-base font-bold text-[#0D0E11] tabular-nums tracking-tight">
+                      {formatCents(inv.amountTotalCents)}
+                    </span>
+                    <span className="text-[10px] font-mono text-[#9CA3AF] ml-1">USD</span>
+                  </div>
 
                   {inv.status === "SENT" && (
                     <div className="flex items-center gap-1.5">
                       <button
                         onClick={() => handleSimulateOverdue(inv.id)}
                         disabled={activeActionId === inv.id}
-                        className="px-2.5 py-1 rounded-md bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-800 text-xs font-semibold transition-colors"
+                        className="px-2.5 py-1.5 rounded-lg bg-white hover:bg-[#F3F4F6] border border-[#E5E7EB] text-[#374151] hover:text-[#0D0E11] text-xs font-medium transition-colors shadow-2xs whitespace-nowrap"
                       >
                         Simulate Overdue
                       </button>
                       <button
                         onClick={() => handleMarkPaid(inv.id)}
                         disabled={activeActionId === inv.id}
-                        className="px-2.5 py-1 rounded-md bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 text-xs font-semibold transition-colors"
+                        className="px-3 py-1.5 rounded-lg bg-[#0D0E11] hover:bg-[#232529] text-white text-xs font-semibold shadow-2xs transition-all active:scale-95 flex items-center gap-1.5 whitespace-nowrap"
                       >
-                        Mark Paid
+                        <span className="h-1.5 w-1.5 rounded-full bg-[#84CC16]" />
+                        <span>Mark Paid</span>
                       </button>
                     </div>
                   )}

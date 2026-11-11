@@ -17,9 +17,7 @@ import {
   CreditCard,
   ExternalLink,
   ChevronRight,
-  TrendingUp,
   Sparkles,
-  ArrowRight,
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { Invoice } from "@/lib/types";
@@ -32,9 +30,7 @@ import {
   playHarmonicSuccess,
   playAlertChime,
 } from "@/components/interactive/sound-effects";
-import { LottieCheck, LottieAgentRadar, LottieCoins } from "@/components/lottie/lottie-animations";
-import { DecryptedText } from "@/components/reactbits/decrypted-text";
-import { ShinyText } from "@/components/reactbits/shiny-text";
+import { LottieCheck } from "@/components/lottie/lottie-animations";
 import { MagnetButton } from "@/components/reactbits/magnet-button";
 
 type TabFilter = "ALL" | "SENT" | "PAID" | "OVERDUE" | "NEEDS_REVIEW";
@@ -108,7 +104,7 @@ function InvoicesContent() {
     );
   });
 
-  /* ── Total Computations ── */
+  /* ── Computations ── */
   const totalOutstanding = invoices
     .filter((i) => i.status === "SENT")
     .reduce((acc, i) => acc + i.amountTotalCents, 0);
@@ -282,7 +278,7 @@ function InvoicesContent() {
             playSoftClick();
             setShowCreate(!showCreate);
           }}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold transition-all shadow-md active:scale-95 ${
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold transition-all shadow-sm active:scale-95 ${
             showCreate
               ? "bg-[#1A1C1E] text-white hover:bg-black"
               : "bg-[#0D0E11] text-white hover:bg-[#2A2B30]"
@@ -294,43 +290,45 @@ function InvoicesContent() {
       }
     >
       <div className="space-y-6">
-        {/* ── Top Financial Ribbon ── */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pb-6 border-b border-[#E5E7EB]">
-          <div className="p-4 rounded-2xl bg-[#F9FAFB] border border-[#E5E7EB]">
+        {/* ── Top Financial Ribbon: Balanced Cohesive Neutral Palette ── */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pb-6 border-b border-[#EBECE9]">
+          <div className="p-4 rounded-2xl bg-[#FAFAF8] border border-[#EBECE9]">
             <span className="text-[11px] font-mono uppercase text-[#6B7280] tracking-wider block mb-1">
               Total Outstanding
             </span>
-            <div className="text-2xl font-black text-[#0D0E11] tabular-nums">
-              {formatCents(totalOutstanding)}
+            <div className="text-2xl font-bold text-[#0D0E11] tabular-nums tracking-tight flex items-baseline gap-1">
+              <span>{formatCents(totalOutstanding)}</span>
+              <span className="text-xs font-mono text-[#9CA3AF]">USD</span>
             </div>
-            <div className="text-[11px] text-[#6B7280] mt-1 flex items-center gap-1">
+            <div className="text-[11px] text-[#6B7280] mt-1.5 flex items-center gap-1.5">
               <span className="h-1.5 w-1.5 rounded-full bg-[#3B82F6]" />
               <span>{tabCounts.SENT + tabCounts.OVERDUE} pending collection</span>
             </div>
           </div>
 
-          <div className="p-4 rounded-2xl bg-[#F9FAFB] border border-[#E5E7EB]">
+          <div className="p-4 rounded-2xl bg-[#FAFAF8] border border-[#EBECE9]">
             <span className="text-[11px] font-mono uppercase text-[#6B7280] tracking-wider block mb-1">
               Settled Volume
             </span>
-            <div className="text-2xl font-black text-[#10B981] tabular-nums flex items-center justify-between">
+            <div className="text-2xl font-bold text-[#0D0E11] tabular-nums tracking-tight flex items-baseline gap-1">
               <span>{formatCents(totalPaid)}</span>
-              <LottieCheck size={28} />
+              <span className="text-xs font-mono text-[#9CA3AF]">USD</span>
             </div>
-            <div className="text-[11px] text-[#6B7280] mt-1 flex items-center gap-1">
+            <div className="text-[11px] text-[#6B7280] mt-1.5 flex items-center gap-1.5">
               <span className="h-1.5 w-1.5 rounded-full bg-[#10B981]" />
               <span>PayPal Sandbox verified</span>
             </div>
           </div>
 
-          <div className="p-4 rounded-2xl bg-[#F9FAFB] border border-[#E5E7EB]">
+          <div className="p-4 rounded-2xl bg-[#FAFAF8] border border-[#EBECE9]">
             <span className="text-[11px] font-mono uppercase text-[#6B7280] tracking-wider block mb-1">
               Escalation Engine
             </span>
-            <div className="text-2xl font-black text-[#0D0E11] tabular-nums">
-              {tabCounts.OVERDUE} Overdue
+            <div className="text-2xl font-bold text-[#0D0E11] tabular-nums tracking-tight flex items-baseline gap-1">
+              <span>{tabCounts.OVERDUE} Overdue</span>
+              <span className="text-xs font-mono text-[#9CA3AF]">accounts</span>
             </div>
-            <div className="text-[11px] text-[#6B7280] mt-1 flex items-center gap-1">
+            <div className="text-[11px] text-[#6B7280] mt-1.5 flex items-center gap-1.5">
               <span className="h-1.5 w-1.5 rounded-full bg-[#F59E0B]" />
               <span>Automated chase active</span>
             </div>
@@ -339,11 +337,11 @@ function InvoicesContent() {
 
         {/* ── Scoping Drawer ── */}
         {showCreate && (
-          <div className="p-5 rounded-2xl bg-[#F9FAFB] border border-[#E5E7EB] shadow-inner space-y-4 animate-in fade-in duration-300">
-            <div className="flex items-center justify-between pb-2 border-b border-[#E5E7EB]">
+          <div className="p-5 rounded-2xl bg-[#FAFAF8] border border-[#EBECE9] space-y-4 animate-in fade-in duration-300">
+            <div className="flex items-center justify-between pb-2 border-b border-[#EBECE9]">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-[#84CC16]" />
-                <span className="text-sm font-bold text-[#0D0E11]">
+                <span className="text-xs font-bold text-[#0D0E11]">
                   Autonomous Invoice Scoper
                 </span>
               </div>
@@ -359,7 +357,7 @@ function InvoicesContent() {
                   onChange={(e) => setInputText(e.target.value)}
                   placeholder='e.g. "Sarah Chen approved the mobile UI redesign for $1,200. Send to sarah@acmecorp.com by Friday."'
                   rows={3}
-                  className="w-full bg-white border border-[#E5E7EB] rounded-xl p-3 text-xs text-[#0D0E11] placeholder-[#9CA3AF] focus:outline-none focus:border-[#0D0E11] transition-all resize-none shadow-sm"
+                  className="w-full bg-white border border-[#E5E7EB] rounded-xl p-3 text-xs text-[#0D0E11] placeholder-[#9CA3AF] focus:outline-none focus:border-[#0D0E11] transition-all resize-none shadow-2xs"
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();
@@ -374,7 +372,7 @@ function InvoicesContent() {
                   <button
                     onClick={handleScope}
                     disabled={isProcessing || !inputText.trim()}
-                    className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#0D0E11] text-white text-xs font-bold hover:bg-[#2A2B30] disabled:opacity-50 transition-all shadow-sm"
+                    className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#0D0E11] text-white text-xs font-bold hover:bg-[#2A2B30] disabled:opacity-50 transition-all shadow-2xs"
                   >
                     {isProcessing ? (
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -386,10 +384,10 @@ function InvoicesContent() {
                 </div>
               </div>
             ) : (
-              <div className="space-y-4 bg-white p-4 rounded-xl border border-[#E5E7EB]">
+              <div className="space-y-4 bg-white p-4 rounded-xl border border-[#EBECE9]">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-[#0D0E11]">Invoice Scoped Proposal</span>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#ECFDF5] text-[#065F46] border border-[#A7F3D0]">
                     Confidence: {Math.round((proposal.confidence || 1) * 100)}%
                   </span>
                 </div>
@@ -403,7 +401,7 @@ function InvoicesContent() {
                       type="text"
                       value={proposal.clientName || ""}
                       onChange={(e) => setProposal({ ...proposal, clientName: e.target.value })}
-                      className="w-full bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg px-2.5 py-1.5 text-xs text-[#0D0E11]"
+                      className="w-full bg-[#FAFAF8] border border-[#E5E7EB] rounded-lg px-2.5 py-1.5 text-xs text-[#0D0E11]"
                     />
                   </div>
                   <div>
@@ -414,7 +412,7 @@ function InvoicesContent() {
                       type="email"
                       value={proposal.clientEmail || ""}
                       onChange={(e) => setProposal({ ...proposal, clientEmail: e.target.value })}
-                      className="w-full bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg px-2.5 py-1.5 text-xs text-[#0D0E11]"
+                      className="w-full bg-[#FAFAF8] border border-[#E5E7EB] rounded-lg px-2.5 py-1.5 text-xs text-[#0D0E11]"
                     />
                   </div>
                 </div>
@@ -427,7 +425,7 @@ function InvoicesContent() {
                     {proposal.lineItems.map((item: any, idx: number) => (
                       <div
                         key={idx}
-                        className="flex items-center justify-between p-2 rounded-lg bg-[#F9FAFB] border border-[#E5E7EB] text-xs"
+                        className="flex items-center justify-between p-2 rounded-lg bg-[#FAFAF8] border border-[#EBECE9] text-xs"
                       >
                         <span className="font-medium text-[#0D0E11]">{item.description}</span>
                         <span className="font-mono font-bold text-[#0D0E11]">
@@ -438,14 +436,14 @@ function InvoicesContent() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between pt-2 border-t border-[#E5E7EB]">
+                <div className="flex items-center justify-between pt-2 border-t border-[#EBECE9]">
                   <div>
                     <span className="text-[11px] text-[#6B7280]">Due Date: </span>
                     <span className="text-xs font-mono font-bold text-[#0D0E11]">{proposal.dueDate}</span>
                   </div>
                   <div className="text-right">
                     <span className="text-[11px] text-[#6B7280] mr-2">Total:</span>
-                    <span className="text-base font-black text-[#0D0E11] tabular-nums">
+                    <span className="text-base font-bold text-[#0D0E11] tabular-nums">
                       {formatCents(proposal.amountTotalCents)}
                     </span>
                   </div>
@@ -478,7 +476,7 @@ function InvoicesContent() {
 
         {/* ── Filters & Search ── */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-1 bg-[#F3F4F6] p-1 rounded-xl">
+          <div className="flex items-center gap-1 bg-[#F1F3F5] p-1 rounded-xl">
             {(["ALL", "SENT", "PAID", "OVERDUE", "NEEDS_REVIEW"] as TabFilter[]).map((tab) => (
               <button
                 key={tab}
@@ -486,9 +484,9 @@ function InvoicesContent() {
                   playSoftClick();
                   setFilter(tab);
                 }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                   filter === tab
-                    ? "bg-white text-[#0D0E11] shadow-sm"
+                    ? "bg-white text-[#0D0E11] shadow-2xs font-semibold"
                     : "text-[#6B7280] hover:text-[#0D0E11]"
                 }`}
               >
@@ -507,13 +505,13 @@ function InvoicesContent() {
               placeholder="Search client or invoice..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full sm:w-60 bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl pl-9 pr-3 py-1.5 text-xs text-[#0D0E11] placeholder-[#9CA3AF] focus:outline-none focus:border-[#0D0E11] transition-all"
+              className="w-full sm:w-60 bg-white border border-[#E5E7EB] rounded-xl pl-9 pr-3 py-1.5 text-xs text-[#0D0E11] placeholder-[#9CA3AF] focus:outline-none focus:border-[#0D0E11] transition-all"
             />
           </div>
         </div>
 
-        {/* ── Invoices Ledger Table ── */}
-        <div className="border border-[#E5E7EB] rounded-2xl overflow-hidden bg-white shadow-sm divide-y divide-[#E5E7EB]">
+        {/* ── Invoices Ledger Table with Clean Horizontal Spacing (No Broken Wrapping) ── */}
+        <div className="border border-[#EBECE9] rounded-2xl overflow-hidden bg-white shadow-2xs divide-y divide-[#EBECE9]">
           {loading ? (
             <div className="p-8 text-center text-xs text-[#9CA3AF] flex items-center justify-center gap-2">
               <Loader2 className="w-4 h-4 animate-spin text-[#0D0E11]" />
@@ -531,68 +529,94 @@ function InvoicesContent() {
             filtered.map((inv) => {
               const isSelected = selectedInvoice?.id === inv.id;
               const isOverdue = inv.status === "SENT" && new Date(inv.dueDate) < now;
+
+              // Unified Status Pill with Quiet Semantic Restraint
+              let statusBadge = (
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-mono px-2 py-0.5 rounded-full bg-[#F1F5F9] text-[#334155] border border-[#CBD5E1]">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#3B82F6]" />
+                  <span>SENT</span>
+                </span>
+              );
+
+              if (inv.status === "PAID") {
+                statusBadge = (
+                  <span className="inline-flex items-center gap-1.5 text-[11px] font-mono px-2 py-0.5 rounded-full bg-[#ECFDF5] text-[#065F46] border border-[#A7F3D0]">
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#10B981]" />
+                    <span>PAID</span>
+                  </span>
+                );
+              } else if (inv.status === "NEEDS_REVIEW") {
+                statusBadge = (
+                  <span className="inline-flex items-center gap-1.5 text-[11px] font-mono px-2 py-0.5 rounded-full bg-[#FFE4E6] text-[#9F1239] border border-[#FECDD3]">
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#DC2626]" />
+                    <span>REVIEW</span>
+                  </span>
+                );
+              } else if (isOverdue) {
+                statusBadge = (
+                  <span className="inline-flex items-center gap-1.5 text-[11px] font-mono px-2 py-0.5 rounded-full bg-[#FEF3C7] text-[#92400E] border border-[#FDE68A]">
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#F59E0B]" />
+                    <span>OVERDUE{inv.reminderLevel > 0 ? ` · LVL ${inv.reminderLevel}` : ""}</span>
+                  </span>
+                );
+              }
+
               return (
                 <div
                   key={inv.id}
                   className={`p-4 sm:p-5 transition-colors ${
-                    isSelected ? "bg-[#F9FAFB]" : "hover:bg-[#FAFAFA]"
+                    isSelected ? "bg-[#FAFAF8]" : "hover:bg-[#FDFDFD]"
                   }`}
                 >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    {/* Left Column: Client Info & Metadata with Whitespace-Nowrap */}
                     <div
-                      className="cursor-pointer"
+                      className="cursor-pointer space-y-1.5 min-w-0 flex-1"
                       onClick={() => {
                         playSoftClick();
                         setSelectedInvoice(isSelected ? null : inv);
                       }}
                     >
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-bold text-sm text-[#0D0E11]">
                           {inv.client?.name || "Client"}
                         </span>
                         {inv.client?.company && (
                           <span className="text-xs text-[#6B7280]">({inv.client.company})</span>
                         )}
-                        <span
-                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                            inv.status === "PAID"
-                              ? "bg-emerald-100 text-emerald-800"
-                              : inv.status === "NEEDS_REVIEW"
-                              ? "bg-rose-100 text-rose-800"
-                              : isOverdue
-                              ? "bg-amber-100 text-amber-800"
-                              : "bg-blue-100 text-blue-800"
-                          }`}
-                        >
-                          {isOverdue && inv.status === "SENT" ? "OVERDUE" : inv.status}
-                        </span>
-                        {inv.reminderLevel > 0 && inv.status !== "PAID" && (
-                          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200">
-                            Chase Lvl {inv.reminderLevel}
-                          </span>
-                        )}
+                        {statusBadge}
                       </div>
-                      <div className="text-xs text-[#6B7280] font-mono mt-0.5 flex items-center gap-2">
-                        <span>{inv.invoiceNumber}</span>
-                        <span>•</span>
-                        <span>Due {inv.dueDate}</span>
-                        <span>•</span>
-                        <span>{inv.lineItems[0]?.description || "Services"}</span>
+
+                      {/* Line 2 Metadata: Strict nowrap on ID and Due Date */}
+                      <div className="text-xs text-[#6B7280] font-mono flex items-center gap-2 overflow-hidden text-ellipsis">
+                        <span className="font-semibold text-[#374151] whitespace-nowrap">
+                          {inv.invoiceNumber}
+                        </span>
+                        <span className="text-[#D1D5DB]">•</span>
+                        <span className="whitespace-nowrap">Due {inv.dueDate}</span>
+                        <span className="text-[#D1D5DB]">•</span>
+                        <span className="truncate max-w-[280px] text-[#4B5563]">
+                          {inv.lineItems[0]?.description || "Services rendered"}
+                        </span>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3">
-                      <span className="text-base font-black text-[#0D0E11] tabular-nums">
-                        {formatCents(inv.amountTotalCents)}
-                      </span>
+                    {/* Right Column: Amount & Balanced Action Button Group */}
+                    <div className="flex items-center justify-between md:justify-end gap-3.5 shrink-0">
+                      <div className="text-right whitespace-nowrap">
+                        <span className="text-base font-bold text-[#0D0E11] tabular-nums tracking-tight">
+                          {formatCents(inv.amountTotalCents)}
+                        </span>
+                        <span className="text-[10px] font-mono text-[#9CA3AF] ml-1">USD</span>
+                      </div>
 
-                      {/* Interactive Demo Actions */}
+                      {/* Balanced Action Group: Clean neutrals instead of loud neon rainbow */}
                       {inv.status === "SENT" && (
                         <div className="flex items-center gap-1.5">
                           <button
                             onClick={() => handleSimulateOverdue(inv.id)}
                             disabled={actionLoading === inv.id}
-                            className="px-2.5 py-1 rounded-md bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-800 text-xs font-semibold transition-colors"
+                            className="px-2.5 py-1.5 rounded-lg bg-white hover:bg-[#F3F4F6] border border-[#E5E7EB] text-[#374151] hover:text-[#0D0E11] text-xs font-medium transition-colors shadow-2xs whitespace-nowrap"
                             title="Simulate passing due date and trigger autonomous escalation"
                           >
                             Simulate Overdue
@@ -600,7 +624,7 @@ function InvoicesContent() {
                           <button
                             onClick={() => handleRemindNow(inv.id)}
                             disabled={actionLoading === inv.id}
-                            className="px-2.5 py-1 rounded-md bg-blue-50 hover:bg-blue-100 border border-blue-300 text-blue-800 text-xs font-semibold transition-colors"
+                            className="px-2.5 py-1.5 rounded-lg bg-white hover:bg-[#F3F4F6] border border-[#E5E7EB] text-[#374151] hover:text-[#0D0E11] text-xs font-medium transition-colors shadow-2xs whitespace-nowrap"
                             title="Trigger immediate chase reminder"
                           >
                             Chase
@@ -608,10 +632,11 @@ function InvoicesContent() {
                           <button
                             onClick={() => handleMarkPaid(inv.id)}
                             disabled={actionLoading === inv.id}
-                            className="px-2.5 py-1 rounded-md bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 text-xs font-semibold transition-colors"
+                            className="px-3 py-1.5 rounded-lg bg-[#0D0E11] hover:bg-[#232529] text-white text-xs font-semibold shadow-2xs transition-all active:scale-95 flex items-center gap-1.5 whitespace-nowrap"
                             title="Simulate PayPal instant settlement webhook"
                           >
-                            Mark Paid
+                            <span className="h-1.5 w-1.5 rounded-full bg-[#84CC16]" />
+                            <span>Mark Paid</span>
                           </button>
                         </div>
                       )}
@@ -632,7 +657,7 @@ function InvoicesContent() {
 
                   {/* Expanded Detail Panel */}
                   {isSelected && (
-                    <div className="mt-4 pt-4 border-t border-[#E5E7EB] space-y-3 bg-[#F9FAFB] p-4 rounded-xl">
+                    <div className="mt-4 pt-4 border-t border-[#EBECE9] space-y-3 bg-[#FAFAF8] p-4 rounded-xl">
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
                         <div>
                           <span className="text-[10px] uppercase font-mono text-[#6B7280] block">Client Email</span>
@@ -660,7 +685,7 @@ function InvoicesContent() {
                           </span>
                           <div className="space-y-1">
                             {inv.reminders.map((rem, rIdx) => (
-                              <div key={rIdx} className="text-xs bg-white p-2 rounded border border-[#E5E7EB] flex items-center justify-between">
+                              <div key={rIdx} className="text-xs bg-white p-2 rounded border border-[#EBECE9] flex items-center justify-between">
                                 <span className="font-mono text-[#0D0E11]">
                                   Lvl {rem.level} ({rem.tone}): &quot;{rem.subject}&quot;
                                 </span>
