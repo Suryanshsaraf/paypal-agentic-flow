@@ -3,34 +3,137 @@
 @tailwind utilities;
 
 :root {
-  --background: #090d16;
-  --foreground: #f1f5f9;
-  --card: #0f172a;
-  --card-border: #1e293b;
-  --paypal-blue: #0070ba;
-  --paypal-dark: #003087;
-  --paypal-gold: #ffc439;
+  /* ── Surfaces ── */
+  --bg-primary: #080B14;
+  --bg-secondary: #0D1220;
+  --bg-elevated: #111827;
+  --bg-interactive: #172033;
+
+  /* ── Borders ── */
+  --border-default: #202B3D;
+  --border-subtle: #1a2332;
+
+  /* ── Text ── */
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
+
+  /* ── Semantic Accents ── */
+  --accent-primary: #6366F1;
+  --accent-primary-hover: #818CF8;
+  --accent-primary-muted: rgba(99, 102, 241, 0.15);
+  --color-success: #10B981;
+  --color-success-muted: rgba(16, 185, 129, 0.15);
+  --color-warning: #F59E0B;
+  --color-warning-muted: rgba(245, 158, 11, 0.15);
+  --color-danger: #F43F5E;
+  --color-danger-muted: rgba(244, 63, 94, 0.15);
+  --color-info: #38BDF8;
+  --color-info-muted: rgba(56, 189, 248, 0.15);
+
+  /* ── Layout ── */
+  --sidebar-width: 260px;
+  --sidebar-collapsed-width: 68px;
+  --header-height: 56px;
+
+  /* ── Radii ── */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-pill: 9999px;
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-feature-settings: "rlig" 1, "calt" 1;
-  min-height: 100vh;
+@layer base {
+  * {
+    border-color: var(--border-default);
+  }
+
+  body {
+    color: var(--text-primary);
+    background: var(--bg-primary);
+    font-feature-settings: "rlig" 1, "calt" 1, "tnum" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    min-height: 100vh;
+  }
+
+  /* Tabular numerals for financial figures */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
+
+  /* Selection */
+  ::selection {
+    background: rgba(99, 102, 241, 0.4);
+    color: #F8FAFC;
+  }
 }
 
-/* Custom Scrollbar */
+/* ── Scrollbar ── */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #090d16;
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: var(--border-default);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: var(--text-muted);
+}
+
+/* ── Focus Ring ── */
+@layer utilities {
+  .focus-ring {
+    @apply outline-none ring-2 ring-accent/40 ring-offset-2 ring-offset-bg-primary;
+  }
+}
+
+/* ── Reduced Motion ── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ── Agent Pulse ── */
+@keyframes agent-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.15);
+  }
+}
+
+.agent-pulse {
+  animation: agent-pulse 2s ease-in-out infinite;
+}
+
+/* ── Skeleton Loading ── */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-elevated) 25%,
+    var(--bg-interactive) 50%,
+    var(--bg-elevated) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
 }
