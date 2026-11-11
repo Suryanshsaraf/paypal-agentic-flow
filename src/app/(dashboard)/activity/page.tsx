@@ -12,37 +12,41 @@ import {
   Activity,
   Wifi,
   Filter,
+  FileText,
+  CreditCard,
+  ChevronRight,
+  TrendingUp,
 } from "lucide-react";
 import { EventLog } from "@/lib/types";
 import { formatCents } from "@/lib/money";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { EmptyState } from "@/components/ui/empty-state";
+import { SynexSubpageShell } from "@/components/synex/synex-subpage-shell";
+import { playSoftClick, playHarmonicSuccess } from "@/components/interactive/sound-effects";
+import { LottieCheck, LottieAgentRadar } from "@/components/lottie/lottie-animations";
+import { DecryptedText } from "@/components/reactbits/decrypted-text";
+import { MagnetButton } from "@/components/reactbits/magnet-button";
 
-/* ── Event helpers ── */
 function eventLabel(type: string, payload: Record<string, any>): string {
   switch (type) {
     case "WEBHOOK_PAID":
       return `Payment received: ${formatCents(payload?.amountCents || 0)}`;
     case "THANKYOU_SENT":
-      return "Thank-you note dispatched";
+      return "Autonomous thank-you note dispatched to client";
     case "INVOICE_CREATED":
-      return `Invoice ${payload?.invoiceNumber || ""} created`;
+      return `Invoice ${payload?.invoiceNumber || ""} scoped & created`;
     case "INVOICE_SENT":
-      return `Invoice ${payload?.invoiceNumber || ""} sent via PayPal`;
+      return `Invoice ${payload?.invoiceNumber || ""} dispatched via PayPal Rails`;
     case "REMINDER_SENT":
-      return `Level ${payload?.level || 1} (${payload?.tone}) reminder dispatched`;
+      return `Level ${payload?.level || 1} (${payload?.tone}) reminder delivered`;
     case "ESCALATED_TO_HUMAN":
-      return "Chasing limits reached — escalated to human review";
+      return "Chasing ceiling reached — escalated to human review";
     case "RESCHEDULED":
-      return "Invoice rescheduled (time-machine simulation)";
+      return "Invoice rescheduled via Time-Machine simulation";
     case "WEBHOOK_CANCELLED":
-      return "Invoice cancelled via webhook";
+      return "Invoice voided via PayPal webhook notification";
     case "REPLY_RECEIVED":
-      return `Client reply: ${payload?.classification || "received"}`;
+      return `Client message classified: "${payload?.classification || "inquiry"}"`;
     case "DISPUTE_FLAGGED":
-      return "Dispute flagged by client";
+      return "Dispute alert detected on transaction";
     default:
       return type.replace(/_/g, " ").toLowerCase();
   }
@@ -59,26 +63,36 @@ function eventCategory(type: string): EventCategory {
   return "all";
 }
 
-function eventColorClasses(type: string) {
+function eventStyles(type: string) {
   if (type === "WEBHOOK_PAID" || type === "THANKYOU_SENT")
-    return { dot: "bg-success", text: "text-success", bg: "bg-success-muted" };
+    return {
+      dot: "bg-[#10B981]",
+      border: "border-emerald-200",
+      badge: "bg-emerald-50 text-emerald-800",
+      icon: <CheckCircle2 className="w-3.5 h-3.5 text-[#10B981]" />,
+    };
   if (type === "ESCALATED_TO_HUMAN" || type === "DISPUTE_FLAGGED")
-    return { dot: "bg-danger", text: "text-danger", bg: "bg-danger-muted" };
+    return {
+      dot: "bg-[#DC2626]",
+      border: "border-rose-200",
+      badge: "bg-rose-50 text-rose-800",
+      icon: <AlertTriangle className="w-3.5 h-3.5 text-[#DC2626]" />,
+    };
   if (type === "REMINDER_SENT")
-    return { dot: "bg-warning", text: "text-warning", bg: "bg-warning-muted" };
-  return { dot: "bg-accent", text: "text-accent", bg: "bg-accent-muted" };
+    return {
+      dot: "bg-[#F59E0B]",
+      border: "border-amber-200",
+      badge: "bg-amber-50 text-amber-800",
+      icon: <BellRing className="w-3.5 h-3.5 text-[#F59E0B]" />,
+    };
+  return {
+    dot: "bg-[#3B82F6]",
+    border: "border-blue-200",
+    badge: "bg-blue-50 text-blue-800",
+    icon: <Zap className="w-3.5 h-3.5 text-[#3B82F6]" />,
+  };
 }
 
-function eventIcon(type: string) {
-  if (type === "WEBHOOK_PAID" || type === "THANKYOU_SENT")
-    return <CheckCircle2 className="w-4 h-4" />;
-  if (type === "ESCALATED_TO_HUMAN" || type === "DISPUTE_FLAGGED")
-    return <AlertTriangle className="w-4 h-4" />;
-  if (type === "REMINDER_SENT") return <BellRing className="w-4 h-4" />;
-  return <Zap className="w-4 h-4" />;
-}
-
-/* ── Group events by day ── */
 function groupByDay(events: EventLog[]): Map<string, EventLog[]> {
   const groups = new Map<string, EventLog[]>();
   for (const evt of events) {
@@ -135,143 +149,147 @@ export default function ActivityPage() {
 
   const grouped = groupByDay(filteredEvents);
 
-  // Compute agent stats
   const reminderCount = events.filter((e) => e.eventType === "REMINDER_SENT").length;
   const paymentCount = events.filter((e) => e.eventType === "WEBHOOK_PAID").length;
 
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-page-title text-text-primary">Agent Activity</h1>
-          <p className="text-body text-text-muted mt-1">
-            Your autonomous agent&apos;s complete operational ledger.
-          </p>
-        </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={fetchData}
-          icon={<RefreshCw className="w-3.5 h-3.5" />}
+    <SynexSubpageShell
+      badge="AUTONOMOUS TELEMETRY"
+      titleLight="Continuous Operational"
+      titleBold="Audit Ledger"
+      description="Real-time chronological telemetry of every invoice scoped, PayPal webhook received, and escalating reminder dispatched by the GetPaid autonomous copilot."
+      headerAction={
+        <MagnetButton
+          onClick={() => {
+            playSoftClick();
+            fetchData();
+          }}
+          className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#0D0E11] text-white text-xs font-bold hover:bg-[#2A2B30] transition-all shadow-md active:scale-95"
         >
-          Refresh
-        </Button>
-      </div>
-
-      {/* ── Agent Command Center ── */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card padding="sm">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="h-6 w-6 rounded-control bg-success-muted flex items-center justify-center">
-              <Wifi className="w-3 h-3 text-success" />
+          <RefreshCw className="w-3.5 h-3.5 text-[#84CC16]" />
+          <span>Refresh Ledger</span>
+        </MagnetButton>
+      }
+    >
+      <div className="space-y-6">
+        {/* ── Top Telemetry KPI Cards ── */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 pb-6 border-b border-[#E5E7EB]">
+          <div className="p-3.5 rounded-2xl bg-[#F9FAFB] border border-[#E5E7EB]">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[10px] font-mono uppercase text-[#6B7280]">Agent Core</span>
+              <LottieAgentRadar size={18} />
             </div>
-            <span className="text-timestamp text-text-muted font-medium">Agent Status</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-success agent-pulse" />
-            <span className="text-body font-medium text-success">Online</span>
-          </div>
-        </Card>
-
-        <Card padding="sm">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="h-6 w-6 rounded-control bg-accent-muted flex items-center justify-center">
-              <Activity className="w-3 h-3 text-accent" />
+            <div className="text-lg font-bold text-[#0D0E11] flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-[#84CC16] animate-pulse" />
+              <span>Online</span>
             </div>
-            <span className="text-timestamp text-text-muted font-medium">Monitoring</span>
+            <span className="text-[10px] text-[#6B7280]">100% background uptime</span>
           </div>
-          <span className="text-body font-medium text-text-primary tabular-nums">
-            {stats?.sentCount || 0} invoices
-          </span>
-        </Card>
 
-        <Card padding="sm">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="h-6 w-6 rounded-control bg-warning-muted flex items-center justify-center">
-              <BellRing className="w-3 h-3 text-warning" />
+          <div className="p-3.5 rounded-2xl bg-[#F9FAFB] border border-[#E5E7EB]">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[10px] font-mono uppercase text-[#6B7280]">Monitoring</span>
+              <Activity className="w-3.5 h-3.5 text-[#3B82F6]" />
             </div>
-            <span className="text-timestamp text-text-muted font-medium">Reminders</span>
-          </div>
-          <span className="text-body font-medium text-text-primary tabular-nums">
-            {reminderCount} dispatched
-          </span>
-        </Card>
-
-        <Card padding="sm">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="h-6 w-6 rounded-control bg-info-muted flex items-center justify-center">
-              <Shield className="w-3 h-3 text-info" />
+            <div className="text-lg font-bold text-[#0D0E11] tabular-nums">
+              {stats?.sentCount || 0} Invoices
             </div>
-            <span className="text-timestamp text-text-muted font-medium">PayPal</span>
+            <span className="text-[10px] text-[#6B7280]">Active Net-7 watch</span>
           </div>
-          <span className={`text-body font-medium ${health?.ok ? "text-success" : "text-warning"}`}>
-            {health?.ok ? "Connected" : "Checking…"}
-          </span>
-        </Card>
-      </div>
 
-      {/* ── Filters ── */}
-      <div className="flex items-center gap-1 p-0.5 rounded-control bg-bg-secondary border border-border w-fit">
-        {(["all", "payments", "reminders", "invoices", "escalations"] as EventCategory[]).map(
-          (cat) => (
-            <button
-              key={cat}
-              onClick={() => setFilter(cat)}
-              className={`px-3 py-1.5 rounded-control text-meta font-medium capitalize transition-colors ${
-                filter === cat
-                  ? "bg-accent text-white"
-                  : "text-text-muted hover:text-text-secondary"
-              }`}
-            >
-              {cat}
-            </button>
-          )
-        )}
-      </div>
+          <div className="p-3.5 rounded-2xl bg-[#F9FAFB] border border-[#E5E7EB]">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[10px] font-mono uppercase text-[#6B7280]">Chased</span>
+              <BellRing className="w-3.5 h-3.5 text-[#F59E0B]" />
+            </div>
+            <div className="text-lg font-bold text-[#0D0E11] tabular-nums">
+              {reminderCount} Reminders
+            </div>
+            <span className="text-[10px] text-[#6B7280]">Escalating cadence</span>
+          </div>
 
-      {/* ── Event Timeline ── */}
-      {filteredEvents.length === 0 ? (
-        <Card>
-          <EmptyState
-            icon={<Activity className="w-10 h-10" />}
-            title="No activity yet"
-            description="Agent events will appear here as the system processes invoices."
-          />
-        </Card>
-      ) : (
-        <div className="space-y-6">
-          {Array.from(grouped.entries()).map(([day, dayEvents]) => (
-            <div key={day}>
-              <h3 className="text-meta text-text-muted font-medium mb-3 sticky top-0 bg-bg-primary py-1 z-10">
-                {day}
-              </h3>
-              <Card padding="none">
-                <div className="divide-y divide-border">
+          <div className="p-3.5 rounded-2xl bg-[#F9FAFB] border border-[#E5E7EB]">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[10px] font-mono uppercase text-[#6B7280]">Settled</span>
+              <CheckCircle2 className="w-3.5 h-3.5 text-[#10B981]" />
+            </div>
+            <div className="text-lg font-bold text-[#10B981] tabular-nums">
+              {paymentCount} Payments
+            </div>
+            <span className="text-[10px] text-[#6B7280]">Webhook verified</span>
+          </div>
+        </div>
+
+        {/* ── Category Filters ── */}
+        <div className="flex items-center gap-1.5 bg-[#F3F4F6] p-1 rounded-xl w-fit">
+          {(["all", "payments", "reminders", "invoices", "escalations"] as EventCategory[]).map(
+            (cat) => (
+              <button
+                key={cat}
+                onClick={() => {
+                  playSoftClick();
+                  setFilter(cat);
+                }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all ${
+                  filter === cat
+                    ? "bg-white text-[#0D0E11] shadow-sm"
+                    : "text-[#6B7280] hover:text-[#0D0E11]"
+                }`}
+              >
+                {cat}
+              </button>
+            )
+          )}
+        </div>
+
+        {/* ── Event Timeline Stream ── */}
+        {filteredEvents.length === 0 ? (
+          <div className="p-12 text-center space-y-2 border border-[#E5E7EB] rounded-2xl bg-[#F9FAFB]">
+            <Activity className="w-8 h-8 text-[#9CA3AF] mx-auto stroke-1" />
+            <div className="text-sm font-bold text-[#0D0E11]">No activity logged yet</div>
+            <div className="text-xs text-[#6B7280]">
+              Events will record automatically as invoices are scoped and chased.
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {Array.from(grouped.entries()).map(([day, dayEvents]) => (
+              <div key={day} className="space-y-2.5">
+                <div className="text-[11px] font-mono uppercase tracking-wider text-[#6B7280] flex items-center gap-2">
+                  <span>{day}</span>
+                  <span className="h-[1px] flex-1 bg-[#E5E7EB]" />
+                </div>
+
+                <div className="border border-[#E5E7EB] rounded-2xl overflow-hidden bg-white shadow-sm divide-y divide-[#E5E7EB]">
                   {dayEvents.map((evt) => {
-                    const colors = eventColorClasses(evt.eventType);
+                    const st = eventStyles(evt.eventType);
                     return (
                       <div
                         key={evt.id}
-                        className="flex items-start gap-3 px-4 py-3"
+                        className="p-4 flex items-start gap-3.5 hover:bg-[#F9FAFB] transition-colors"
                       >
-                        <div
-                          className={`mt-0.5 h-7 w-7 shrink-0 rounded-control ${colors.bg} flex items-center justify-center ${colors.text}`}
-                        >
-                          {eventIcon(evt.eventType)}
+                        <div className="mt-0.5 p-1.5 rounded-lg bg-[#F3F4F6] border border-[#E5E7EB] shrink-0">
+                          {st.icon}
                         </div>
+
                         <div className="flex-1 min-w-0">
-                          <p className={`text-body font-medium ${colors.text}`}>
-                            {eventLabel(evt.eventType, evt.payload)}
-                          </p>
-                          <p className="text-meta text-text-muted mt-0.5 truncate">
-                            {evt.payload?.reason ||
-                              evt.payload?.message ||
-                              evt.payload?.invoiceNumber ||
-                              ""}
-                          </p>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-[#0D0E11]">
+                              {eventLabel(evt.eventType, evt.payload)}
+                            </span>
+                            <span className={`text-[9px] font-mono px-2 py-0.5 rounded-full ${st.badge}`}>
+                              {evt.eventType}
+                            </span>
+                          </div>
+
+                          {(evt.payload?.reason || evt.payload?.message || evt.payload?.invoiceNumber) && (
+                            <p className="text-xs text-[#6B7280] mt-0.5 font-sans">
+                              {evt.payload?.reason || evt.payload?.message || `Ref: ${evt.payload?.invoiceNumber}`}
+                            </p>
+                          )}
                         </div>
-                        <span className="text-timestamp text-text-muted whitespace-nowrap shrink-0">
+
+                        <span className="text-[11px] font-mono text-[#9CA3AF] shrink-0">
                           {new Date(evt.createdAt).toLocaleTimeString([], {
                             hour: "2-digit",
                             minute: "2-digit",
@@ -281,11 +299,11 @@ export default function ActivityPage() {
                     );
                   })}
                 </div>
-              </Card>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </SynexSubpageShell>
   );
 }
