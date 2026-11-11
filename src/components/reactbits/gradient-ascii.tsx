@@ -442,6 +442,8 @@ export interface GradientASCIIProps {
   clickEffect?: "wave" | "burst" | "none";
   intro?: boolean;
   lightMode?: boolean;
+  /** Stop rendering frames (e.g. while the layer is fully faded out). */
+  paused?: boolean;
   fontFamily?: string;
   dpr?: number;
   className?: string;
@@ -470,6 +472,7 @@ export function GradientASCII({
   clickEffect = "wave",
   intro = true,
   lightMode = false,
+  paused = false,
   fontFamily = DEFAULT_FONT,
   dpr,
   className = "",
@@ -502,6 +505,7 @@ export function GradientASCII({
     clickEffect: CLICK_EFFECTS[clickEffect] ?? 1,
     intro,
     lightMode,
+    paused,
     fontFamily: fontFamily || DEFAULT_FONT,
     dpr,
   };
@@ -773,7 +777,10 @@ export function GradientASCII({
 
     const frame = (now: number) => {
       raf = 0;
-      if (disposed || !visible || document.hidden) return;
+      if (disposed || !visible || document.hidden || settingsRef.current.paused) {
+        last = 0;
+        return;
+      }
       if (!ready) {
         if (!gl.isContextLost() && !linked()) {
           raf = requestAnimationFrame(frame);
@@ -806,7 +813,7 @@ export function GradientASCII({
     };
 
     function wake() {
-      if (!raf && !disposed && visible && !document.hidden) raf = requestAnimationFrame(frame);
+      if (!raf && !disposed && visible && !document.hidden && !settingsRef.current.paused) raf = requestAnimationFrame(frame);
     }
 
     const locate = (event: MouseEvent) => {

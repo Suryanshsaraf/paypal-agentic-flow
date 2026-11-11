@@ -6,6 +6,9 @@ import {
   motion,
   useScroll,
   useSpring,
+  useMotionValue,
+  useTransform,
+  useMotionTemplate,
   useMotionValueEvent,
   useInView,
   useReducedMotion,
@@ -27,6 +30,8 @@ import {
   Clock,
   Search,
   MousePointerClick,
+  Send,
+  Mouse,
 } from "lucide-react";
 import { LottieAutonomousBot } from "@/components/lottie/lottie-animations";
 import { MagnetButton } from "@/components/reactbits/magnet-button";
@@ -37,7 +42,8 @@ import { fireFintechCelebration } from "@/components/interactive/confetti";
 const transitionEase: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
 // ── Demo data ──
-type Part = string | { hl: string };
+type LinkKey = number | "total";
+type Part = string | { hl: string; links: LinkKey[] };
 
 const DEMOS: Array<{
   id: string;
@@ -49,18 +55,24 @@ const DEMOS: Array<{
   client: string;
   terms: string;
   items: Array<[string, number]>;
+  thread: string;
+  initials: string;
+  due: string;
 }> = [
   {
     id: "whatsapp",
+    thread: "Sarah Chen",
+    initials: "SC",
+    due: "Due Nov 18",
     channel: "WhatsApp",
     icon: MessageSquare,
     time: "10:24 AM",
     from: "Sarah Chen · Acme Studio",
     parts: [
       "Hey Alex! Go ahead with the ",
-      { hl: "logo + 3 banners" },
+      { hl: "logo + 3 banners", links: [0, 1] },
       ". Agreed price ",
-      { hl: "$500 flat" },
+      { hl: "$500 flat", links: ["total"] },
       ". Send over the invoice when you can!",
     ],
     client: "Sarah Chen · Acme Studio",
@@ -72,17 +84,20 @@ const DEMOS: Array<{
   },
   {
     id: "email",
+    thread: "Re: Landing page, next steps",
+    initials: "DM",
+    due: "Due Nov 25",
     channel: "Email",
     icon: Mail,
     time: "Yesterday",
     from: "David Miller · Fintech Labs",
     parts: [
       "Loved the landing page draft. Let's lock in ",
-      { hl: "2 more pages" },
+      { hl: "2 more pages", links: [0] },
       " plus ",
-      { hl: "a week of QA" },
+      { hl: "a week of QA", links: [1] },
       ". ",
-      { hl: "$1,800 total" },
+      { hl: "$1,800 total", links: ["total"] },
       " works for us.",
     ],
     client: "David Miller · Fintech Labs",
@@ -94,17 +109,20 @@ const DEMOS: Array<{
   },
   {
     id: "slack",
+    thread: "bloom-co-design",
+    initials: "PN",
+    due: "Due on receipt",
     channel: "Slack",
     icon: Hash,
     time: "2:07 PM",
     from: "Priya Nair · Bloom Co.",
     parts: [
       "can you do ",
-      { hl: "6 hours" },
+      { hl: "6 hours", links: [0] },
       " of consulting at ",
-      { hl: "$90/hr" },
+      { hl: "$90/hr", links: [0] },
       " + the ",
-      { hl: "$120 font license" },
+      { hl: "$120 font license", links: [1] },
       "? thx!!",
     ],
     client: "Priya Nair · Bloom Co.",
@@ -120,6 +138,7 @@ const STAGES = [
   {
     day: "Day 0",
     label: "Sent",
+    status: "Invoice delivered",
     color: "#F8FAFC",
     badge: "Invoice sent",
     subject: "Invoice INV-2024-001 from Alex: $500.00",
@@ -130,6 +149,7 @@ const STAGES = [
   {
     day: "Day 7",
     label: "Due",
+    status: "Due today",
     color: "#F59E0B",
     badge: "Due today",
     subject: "Friendly heads-up: your invoice is due today",
@@ -140,6 +160,7 @@ const STAGES = [
   {
     day: "Day 10",
     label: "Friendly",
+    status: "3 days overdue",
     color: "#84CC16",
     badge: "Level 1 · Friendly",
     subject: "Quick follow-up on INV-2024-001",
@@ -150,6 +171,7 @@ const STAGES = [
   {
     day: "Day 14",
     label: "Pause work",
+    status: "7 days overdue",
     color: "#F59E0B",
     badge: "Level 2 · Neutral",
     subject: "Overdue notice: INV-2024-001 (7 days overdue)",
@@ -160,6 +182,7 @@ const STAGES = [
   {
     day: "Day 18",
     label: "Firm notice",
+    status: "11 days overdue",
     color: "#EF4444",
     badge: "Level 3 · Firm",
     subject: "Final notice: INV-2024-001 is 11 days overdue",
@@ -221,6 +244,271 @@ function Spot({ className = "", children, ...rest }: React.HTMLAttributes<HTMLDi
   );
 }
 
+/** Card that tilts toward the cursor in 3D, with a soft lime glare following the pointer. */
+function TiltCard({
+  className = "",
+  wrapperClassName = "",
+  children,
+}: {
+  className?: string;
+  wrapperClassName?: string;
+  children: React.ReactNode;
+}) {
+  const reduce = useReducedMotion();
+  const ref = useRef<HTMLDivElement>(null);
+  const mx = useMotionValue(0.5);
+  const my = useMotionValue(0.5);
+  const rotateX = useSpring(useTransform(my, [0, 1], [5, -5]), { stiffness: 180, damping: 18 });
+  const rotateY = useSpring(useTransform(mx, [0, 1], [-6, 6]), { stiffness: 180, damping: 18 });
+  const gx = useTransform(mx, (v) => `${v * 100}%`);
+  const gy = useTransform(my, (v) => `${v * 100}%`);
+  const glare = useMotionTemplate`radial-gradient(520px circle at ${gx} ${gy}, rgba(190,242,100,0.10), transparent 55%)`;
+  const [hover, setHover] = useState(false);
+
+  const onMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = ref.current;
+    if (!el || reduce) return;
+    const r = el.getBoundingClientRect();
+    mx.set((e.clientX - r.left) / r.width);
+    my.set((e.clientY - r.top) / r.height);
+  };
+  const onLeave = () => {
+    setHover(false);
+    mx.set(0.5);
+    my.set(0.5);
+  };
+
+  return (
+    <div className={`[perspective:1400px] ${wrapperClassName}`}>
+      <motion.div
+        ref={ref}
+        onMouseMove={onMove}
+        onMouseEnter={() => setHover(true)}
+        onMouseLeave={onLeave}
+        style={reduce ? undefined : { rotateX, rotateY, transformStyle: "preserve-3d" }}
+        className={`relative h-full transition-[border-color,box-shadow] duration-300 ${
+          hover ? "!border-[#84CC16]/35 !shadow-[0_0_0_1px_rgba(132,204,22,0.18),0_34px_70px_-30px_rgba(132,204,22,0.4)]" : ""
+        } ${className}`}
+      >
+        <motion.div
+          className="pointer-events-none absolute inset-0 rounded-[inherit] transition-opacity duration-300"
+          style={{ background: glare, opacity: hover ? 1 : 0 }}
+          aria-hidden="true"
+        />
+        <div className="relative h-full">{children}</div>
+      </motion.div>
+    </div>
+  );
+}
+
+/**
+ * One green ASCII layer behind the whole page. Sections drop invisible `data-flow="0..1"` markers;
+ * as the viewport centre moves between markers the layer bulges (taller, brighter) or shrinks to
+ * nothing, so the pattern swells into the open space between sections and gets out of the way of
+ * dense content. Rendering pauses entirely while it is faded out.
+ */
+function AsciiFlow() {
+  const level = useMotionValue(0);
+  const smooth = useSpring(level, { stiffness: 55, damping: 18, mass: 0.6 });
+  const opacity = useTransform(smooth, (v) => Math.min(1, Math.max(0, v)) * 0.62);
+  const mask = useTransform(smooth, (v) => {
+    const k = Math.min(1, Math.max(0, v));
+    const w = 50 + 50 * k; // ellipse widens as it bulges
+    const h = 8 + 52 * k; // and grows taller
+    const y = 50 + Math.sin(k * Math.PI) * 6; // the bulge drifts slightly as it swells: a gentle curve
+    return `radial-gradient(ellipse ${w}% ${h}% at 50% ${y}%, #000 0%, rgba(0,0,0,0.6) 45%, transparent 82%)`;
+  });
+  const [active, setActive] = useState(false);
+
+  useEffect(() => {
+    let marks: Array<{ y: number; v: number }> = [];
+    const update = () => {
+      if (!marks.length) return;
+      const c = window.scrollY + window.innerHeight / 2;
+      let v = marks[0].v;
+      if (c >= marks[marks.length - 1].y) v = marks[marks.length - 1].v;
+      else {
+        for (let i = 0; i < marks.length - 1; i++) {
+          const a = marks[i];
+          const b = marks[i + 1];
+          if (c >= a.y && c <= b.y) {
+            const t = (c - a.y) / Math.max(1, b.y - a.y);
+            v = a.v + (b.v - a.v) * (t * t * (3 - 2 * t)); // smoothstep for soft curves
+            break;
+          }
+        }
+      }
+      level.set(v);
+      setActive(v > 0.02);
+    };
+    const measure = () => {
+      marks = Array.from(document.querySelectorAll<HTMLElement>("[data-flow]"))
+        .map((el) => {
+          const r = el.getBoundingClientRect();
+          return { y: r.top + window.scrollY + r.height / 2, v: parseFloat(el.dataset.flow || "0") };
+        })
+        .sort((a, b) => a.y - b.y);
+      update();
+    };
+    measure();
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", measure);
+    const ro = new ResizeObserver(measure);
+    ro.observe(document.body);
+    return () => {
+      window.removeEventListener("scroll", update);
+      window.removeEventListener("resize", measure);
+      ro.disconnect();
+    };
+  }, [level]);
+
+  return (
+    <motion.div
+      className="fixed inset-0 z-0 pointer-events-none"
+      style={{ opacity, WebkitMaskImage: mask, maskImage: mask }}
+      aria-hidden="true"
+    >
+      <GradientASCII
+        colors={["#080B14", "#052E16", "#16A34A", "#A3E635"]}
+        shape="pinch"
+        characters=" =+xX0S8#@"
+        cellSize={16}
+        density={0.85}
+        glow={0.5}
+        speed={0.55}
+        flow={0.6}
+        softness={0.9}
+        mouseInteraction={true}
+        clickEffect="wave"
+        paused={!active}
+      />
+    </motion.div>
+  );
+}
+
+// ── Payment orbit: status chips circling the headline, a radar sweep while waiting, a shockwave when paid ──
+const ORBIT_RINGS = [
+  { size: 64, dur: 46, dir: 1 },
+  { size: 84, dur: 68, dir: -1 },
+  { size: 104, dur: 92, dir: 1 },
+];
+const ORBIT_CHIPS = [
+  // The inner ring carries only a bead, so nothing crosses the copy.
+  { ring: 1, angle: -30, wait: "Webhook · listening", done: "Payment captured", tone: "#38BDF8" },
+  { ring: 1, angle: 90, wait: "Reminder 2 · sent", done: "Reminders stopped", tone: "#F59E0B" },
+  { ring: 1, angle: 210, wait: "Work paused", done: "Work resumed", tone: "#EF4444" },
+  { ring: 2, angle: 30, wait: "Due Nov 5", done: "Paid Nov 16", tone: "#F59E0B" },
+  { ring: 2, angle: 150, wait: "INV-2024-001 · $500.00", done: "Thank-you note sent", tone: "#94A3B8" },
+  { ring: 2, angle: 270, wait: "Sarah Chen · Acme Studio", done: "Client in good standing", tone: "#94A3B8" },
+];
+
+function PaymentOrbit({ paid }: { paid: boolean }) {
+  return (
+    <div
+      className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(1240px,160vw)] aspect-square -z-10 pointer-events-none select-none"
+      style={{
+        WebkitMaskImage: "radial-gradient(circle at 50% 50%, #000 52%, transparent 72%)",
+        maskImage: "radial-gradient(circle at 50% 50%, #000 52%, transparent 72%)",
+      }}
+      aria-hidden="true"
+    >
+      {/* Soft centre glow */}
+      <div
+        className="absolute inset-[22%] rounded-full blur-3xl transition-colors duration-1000"
+        style={{ background: paid ? "rgba(74,222,128,0.16)" : "rgba(132,204,22,0.07)" }}
+      />
+
+      {/* Radar sweep: the agent listening for PayPal */}
+      <div
+        className={`absolute inset-[8%] rounded-full transition-opacity duration-700 ${paid ? "opacity-0" : "opacity-100"}`}
+        style={{
+          background:
+            "conic-gradient(from 0deg, transparent 0deg, transparent 290deg, rgba(132,204,22,0.04) 320deg, rgba(163,230,53,0.22) 360deg)",
+          WebkitMaskImage: "radial-gradient(circle, transparent 27%, #000 30%, #000 70%, transparent 71%)",
+          maskImage: "radial-gradient(circle, transparent 27%, #000 30%, #000 70%, transparent 71%)",
+          animation: "spin-slow 5s linear infinite",
+        }}
+      />
+
+      {/* Orbit rings with their chips */}
+      {ORBIT_RINGS.map((ring, ri) => (
+        <div
+          key={ri}
+          className="absolute left-1/2 top-1/2 rounded-full border border-dashed transition-colors duration-1000"
+          style={{
+            width: `${ring.size * 0.9}%`,
+            height: `${ring.size * 0.9}%`,
+            marginLeft: `-${(ring.size * 0.9) / 2}%`,
+            marginTop: `-${(ring.size * 0.9) / 2}%`,
+            borderColor: paid ? "rgba(74,222,128,0.34)" : "rgba(148,163,184,0.13)",
+            animation: `spin-slow ${ring.dur}s linear infinite ${ring.dir < 0 ? "reverse" : "normal"}`,
+          }}
+        >
+          {/* A small bead travelling on each ring */}
+          <span
+            className="absolute -top-[4px] left-1/2 -ml-[4px] h-2 w-2 rounded-full transition-colors duration-700"
+            style={{
+              background: paid ? "#4ADE80" : "#84CC16",
+              boxShadow: `0 0 12px ${paid ? "#4ADE80" : "#84CC16"}`,
+            }}
+          />
+          {ORBIT_CHIPS.filter((c) => c.ring === ri).map((chip) => {
+            const rad = (chip.angle * Math.PI) / 180;
+            return (
+              <div
+                key={chip.wait}
+                className="absolute hidden sm:block"
+                style={{
+                  left: `${50 + 50 * Math.cos(rad)}%`,
+                  top: `${50 + 50 * Math.sin(rad)}%`,
+                  transform: "translate(-50%, -50%)",
+                }}
+              >
+                {/* Counter-rotate so the label stays upright while the ring turns */}
+                <div
+                  style={{
+                    animation: `spin-slow ${ring.dur}s linear infinite ${ring.dir < 0 ? "normal" : "reverse"}`,
+                  }}
+                >
+                  <div
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-mono whitespace-nowrap backdrop-blur-md transition-all duration-700 ${
+                      paid
+                        ? "bg-[#10B981]/10 border-[#10B981]/40 text-[#6EE7B7] shadow-[0_0_20px_-6px_rgba(16,185,129,0.6)]"
+                        : "bg-[#111827]/80 border-white/[0.08] text-[#CBD5E1]"
+                    }`}
+                  >
+                    <span
+                      className="h-1.5 w-1.5 rounded-full transition-colors duration-700"
+                      style={{ background: paid ? "#4ADE80" : chip.tone }}
+                    />
+                    {paid ? chip.done : chip.wait}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ))}
+
+      {/* Shockwave when the payment lands */}
+      <AnimatePresence>
+        {paid &&
+          [0, 1, 2].map((i) => (
+            <motion.span
+              key={i}
+              initial={{ scale: 0.25, opacity: 0.9 }}
+              animate={{ scale: 2.6, opacity: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 2.2, delay: 0.25 + i * 0.32, ease: [0.2, 0.7, 0.3, 1] }}
+              className="absolute left-1/2 top-1/2 h-[36%] w-[36%] -ml-[18%] -mt-[18%] rounded-full border-2 border-[#4ADE80]"
+              style={{ boxShadow: "0 0 40px rgba(74,222,128,0.45), inset 0 0 40px rgba(74,222,128,0.25)" }}
+            />
+          ))}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 /** Number that counts up once it scrolls into view. */
 function Counter({ to, decimals = 0, suffix = "" }: { to: number; decimals?: number; suffix?: string }) {
   const ref = useRef<HTMLSpanElement>(null);
@@ -239,16 +527,14 @@ function Counter({ to, decimals = 0, suffix = "" }: { to: number; decimals?: num
   );
 }
 
-/** Centered section heading with eyebrow pill and a huge outlined numeral behind it. */
+/** Centered section heading with eyebrow pill. */
 function SectionHeading({
-  num,
   eyebrow,
   dot,
   title,
   sub,
   compact = false,
 }: {
-  num: string;
   eyebrow: string;
   dot: string;
   title: React.ReactNode;
@@ -263,12 +549,6 @@ function SectionHeading({
       transition={{ duration: 0.7, ease: transitionEase }}
       className={`relative mx-auto text-center ${compact ? "max-w-5xl space-y-3" : "max-w-3xl space-y-5"}`}
     >
-      <div
-        className="numeral absolute left-1/2 -translate-x-1/2 -top-14 sm:-top-24 text-[9rem] sm:text-[14rem] -z-10"
-        aria-hidden="true"
-      >
-        {num}
-      </div>
       <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#111827]/80 border border-white/[0.08] text-xs sm:text-sm font-mono text-[#CBD5E1] backdrop-blur-md">
         <span className="h-2 w-2 rounded-full animate-pulse" style={{ background: dot }} />
         <span className="tracking-[0.18em]">{eyebrow}</span>
@@ -280,7 +560,13 @@ function SectionHeading({
       >
         {title}
       </h2>
-      <p className="text-lg sm:text-xl text-[#CBD5E1] leading-relaxed max-w-2xl mx-auto">{sub}</p>
+      <p
+        className={`${
+          compact ? "text-base sm:text-lg" : "text-lg sm:text-xl"
+        } text-[#CBD5E1] leading-relaxed max-w-2xl mx-auto`}
+      >
+        {sub}
+      </p>
     </motion.div>
   );
 }
@@ -352,6 +638,11 @@ export function ScrollStory() {
   const [autoplay, setAutoplay] = useState(true);
   const demo = DEMOS[demoIndex];
   const demoTotal = demo.items.reduce((sum, [, amt]) => sum + amt, 0);
+  // Hovering a highlighted phrase lights up the invoice lines it produced, and vice versa.
+  const [activeLinks, setActiveLinks] = useState<LinkKey[] | null>(null);
+  const isLinked = (keys: LinkKey[]) => !!activeLinks && keys.some((k) => activeLinks.includes(k));
+  const [sentFor, setSentFor] = useState<string | null>(null);
+  const sent = sentFor === demo.id;
 
   const selectDemo = (i: number, fromUser = true) => {
     if (fromUser) setAutoplay(false);
@@ -380,15 +671,68 @@ export function ScrollStory() {
     offset: ["start start", "end end"],
   });
   const [stageIndex, setStageIndex] = useState(0);
-  const stageClickLock = useRef(0);
+  // md+ : the section pins to the screen and scrolling walks through the days.
+  const [pinned, setPinned] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    const update = () => setPinned(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
   useMotionValueEvent(timelineProgress, "change", (v) => {
-    // Scroll drives the stages only where the section is pinned (md+), and not right after a tap.
-    if (window.innerWidth < 768 || Date.now() < stageClickLock.current) return;
+    if (!window.matchMedia("(min-width: 768px)").matches) return;
     setStageIndex(Math.max(0, Math.min(STAGES.length - 1, Math.floor(v * STAGES.length))));
   });
-  const pickStage = (i: number) => {
-    stageClickLock.current = Date.now() + 1200;
-    setStageIndex(i);
+  // Continuous fill for the progress rail so it moves with every scroll tick.
+  const railFill = useSpring(timelineProgress, { stiffness: 140, damping: 26, mass: 0.4 });
+  const playheadLeft = useTransform(railFill, (v) => `${Math.min(1, Math.max(0, v)) * 100}%`);
+
+  // Horizontal card strip: on desktop, vertical scroll slides it sideways so the current day's card sits centred.
+  const stripRef = useRef<HTMLDivElement>(null);
+  const stripViewportRef = useRef<HTMLDivElement>(null);
+  const metricsRef = useRef({ vw: 1280, w: 540, gap: 24 });
+  const metricsTick = useMotionValue(0);
+  useEffect(() => {
+    const measure = () => {
+      const card = stripRef.current?.querySelector<HTMLElement>("[data-card]");
+      metricsRef.current = { vw: window.innerWidth, w: card?.offsetWidth ?? 540, gap: 24 };
+      metricsTick.set(metricsTick.get() + 1); // re-run the strip transform with the new sizes
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [metricsTick]);
+  const stripX = useTransform([railFill, metricsTick], ([v]: number[]) => {
+    const { vw, w, gap } = metricsRef.current;
+    const n = STAGES.length;
+    const f = Math.min(n - 1, Math.max(0, v * n - 0.5)); // fractional card index
+    return vw / 2 - (f * (w + gap) + w / 2);
+  });
+  // Phones: the strip is a native swipe row; keep the active day in sync with it.
+  const onStripScroll = () => {
+    if (pinned || !stripViewportRef.current) return;
+    const { w, gap } = metricsRef.current;
+    const i = Math.round(stripViewportRef.current.scrollLeft / (w + gap));
+    setStageIndex(Math.max(0, Math.min(STAGES.length - 1, i)));
+  };
+
+  // Clicking a day scrolls the page to that day's spot, so scroll and state never disagree.
+  const goToStage = (i: number) => {
+    const el = timelineWrapperRef.current;
+    if (!pinned) {
+      const { w, gap } = metricsRef.current;
+      stripViewportRef.current?.scrollTo({ left: i * (w + gap), behavior: "smooth" });
+      setStageIndex(i);
+      return;
+    }
+    if (!el) return;
+    const top = el.getBoundingClientRect().top + window.scrollY;
+    const travel = el.offsetHeight - window.innerHeight;
+    const y = top + ((i + 0.5) / STAGES.length) * travel;
+    const lenis = (window as unknown as { __lenis?: { scrollTo: (y: number, o?: object) => void } }).__lenis;
+    if (lenis) lenis.scrollTo(y, { duration: 1.1 });
+    else window.scrollTo({ top: y, behavior: "smooth" });
   };
   const stage = STAGES[stageIndex];
 
@@ -437,7 +781,7 @@ export function ScrollStory() {
   const headlineWords2 = ["It", "handles"];
 
   return (
-    <div className="bg-[#080B14] text-[#F8FAFC] min-h-screen font-sans selection:bg-[#84CC16] selection:text-black antialiased relative overflow-hidden">
+    <div className="bg-[#080B14] text-[#F8FAFC] min-h-screen font-sans selection:bg-[#84CC16] selection:text-black antialiased relative overflow-x-clip">
       {/* ── Ambient Interactive GradientASCII Background (React Bits) ── */}
       <div className="absolute top-0 left-0 right-0 h-[115vh] min-h-[860px] overflow-hidden pointer-events-auto opacity-[0.6] z-0">
         <div
@@ -467,6 +811,9 @@ export function ScrollStory() {
 
       {/* ── Faint dotted grid texture ── */}
       <div className="absolute inset-0 bg-grid opacity-60 pointer-events-none z-0" aria-hidden="true" />
+
+      {/* ── Site-wide green ASCII flow: bulges between sections, fades behind content ── */}
+      <AsciiFlow />
 
       {/* ── Sticky Header ── */}
       <header
@@ -506,7 +853,7 @@ export function ScrollStory() {
       </header>
 
       {/* ── 1. Hero (centered) ── */}
-      <section className="relative z-10 min-h-[100svh] flex flex-col items-center justify-center text-center px-6 pt-28 pb-16">
+      <section data-flow="0" className="relative z-10 min-h-[100svh] flex flex-col items-center justify-center text-center px-6 pt-28 pb-16">
         {/* Readability vignette behind the copy */}
         <div
           className="absolute inset-0 pointer-events-none"
@@ -631,11 +978,11 @@ export function ScrollStory() {
 
       {/* ── Live ledger ticker ── */}
       <Ticker />
+      <div data-flow="0.85" className="h-0" aria-hidden="true" />
 
       {/* ── 2. Interactive demo: message → invoice ── */}
       <section id="demo" className="relative z-10 py-24 px-6 max-w-6xl mx-auto space-y-12 scroll-mt-20">
         <SectionHeading
-          num="01"
           eyebrow="TRY IT · PICK A MESSAGE"
           dot="#84CC16"
           title={
@@ -677,128 +1024,354 @@ export function ScrollStory() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-stretch">
-          {/* Client message */}
-          <Spot className="md:col-span-5 p-7 rounded-3xl panel flex flex-col justify-between gap-6 card-interactive card-sheen">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between text-sm text-[#94A3B8]">
-                <span className="font-mono">{demo.channel} message</span>
-                <span>{demo.time}</span>
-              </div>
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={demo.id}
-                  initial={{ opacity: 0, y: 12, scale: 0.98 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -8, scale: 0.98 }}
-                  transition={{ duration: 0.4, ease: transitionEase }}
-                  className="p-5 rounded-2xl bg-[#172033] border border-[#2A3850] text-base sm:text-lg text-[#F8FAFC] leading-relaxed space-y-2"
-                >
-                  <div className="text-sm text-[#94A3B8] font-semibold">{demo.from}</div>
-                  <p>
-                    {demo.parts.map((p, i) =>
-                      typeof p === "string" ? (
-                        <span key={i}>{p}</span>
-                      ) : (
-                        <span
-                          key={i}
-                          className="bg-[#84CC16]/15 text-[#BEF264] px-1.5 py-0.5 rounded-md font-semibold border border-[#84CC16]/40"
-                        >
-                          {p.hl}
-                        </span>
-                      )
-                    )}
-                  </p>
-                </motion.div>
-              </AnimatePresence>
-            </div>
-            <div className="text-sm font-mono text-[#94A3B8] flex items-center gap-2">
-              <span className={`h-2 w-2 rounded-full ${scoping ? "bg-[#F59E0B]" : "bg-[#84CC16]"} animate-pulse`} />
-              <span>{scoping ? "Agent is reading the message…" : "Highlighted: what the agent extracted"}</span>
-            </div>
-          </Spot>
+        <div data-flow="0.15" className="relative grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-10 items-stretch">
+          {/* Agent node sitting between the message and the invoice */}
+          <div
+            className="hidden md:flex absolute top-1/2 -translate-y-1/2 -translate-x-1/2 z-20 items-center justify-center"
+            style={{ left: "calc((100% - 2.5rem) * 5 / 12 + 1.25rem)" }}
+            aria-hidden="true"
+          >
+            {scoping && <span className="absolute h-14 w-14 rounded-full bg-[#84CC16]/30 animate-ping" />}
+            <span
+              className={`relative h-14 w-14 rounded-full bg-[#0B1120] border flex items-center justify-center transition-all duration-300 ${
+                scoping
+                  ? "border-[#84CC16] shadow-[0_0_30px_rgba(132,204,22,0.6)]"
+                  : "border-[#84CC16]/40 shadow-[0_0_18px_rgba(132,204,22,0.25)]"
+              }`}
+            >
+              <Bot className={`w-6 h-6 text-[#A3E635] ${scoping ? "animate-pulse" : ""}`} />
+            </span>
+          </div>
 
-          {/* Invoice */}
-          <div className="md:col-span-7 relative p-7 rounded-3xl panel flex flex-col justify-between gap-6 card-sheen">
-            <div className="conic-ring" aria-hidden="true" />
-            <div className="space-y-5">
-              <div className="flex items-center justify-between pb-4 border-b border-[#202B3D]">
-                <div className="flex items-center gap-2.5">
-                  <span className="h-2.5 w-2.5 rounded-full bg-[#84CC16]" />
-                  <span className="font-bold text-lg text-white">PayPal Invoice Preview</span>
-                </div>
-                <span
-                  className={`text-xs sm:text-sm font-mono px-3 py-1 rounded-full border transition-colors ${
-                    scoping
-                      ? "text-[#F59E0B] bg-[#F59E0B]/10 border-[#F59E0B]/25"
-                      : "text-[#10B981] bg-[#10B981]/10 border-[#10B981]/25"
+          {/* ── Client message, skinned like the real channel ── */}
+          <TiltCard wrapperClassName="md:col-span-5" className="rounded-3xl panel overflow-hidden">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={demo.id}
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.35, ease: transitionEase }}
+                className="h-full flex flex-col"
+              >
+                {/* Channel app bar */}
+                {demo.id === "whatsapp" && (
+                  <div className="flex items-center gap-3 px-5 py-3.5 bg-[#0F2A22] border-b border-white/[0.06]">
+                    <span className="h-10 w-10 rounded-full bg-[#25D366]/20 text-[#4ADE80] flex items-center justify-center text-sm font-bold">
+                      {demo.initials}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-white font-semibold leading-tight">{demo.thread}</div>
+                      <div className="text-xs text-[#4ADE80]">online</div>
+                    </div>
+                    <MessageSquare className="w-5 h-5 text-[#4ADE80]/70" />
+                  </div>
+                )}
+                {demo.id === "email" && (
+                  <div className="px-5 py-3.5 bg-white/[0.03] border-b border-white/[0.06] space-y-1">
+                    <div className="flex items-center gap-2 text-white font-semibold leading-tight">
+                      <Mail className="w-4 h-4 text-[#7DD3FC] shrink-0" />
+                      <span className="truncate">{demo.thread}</span>
+                    </div>
+                    <div className="text-xs text-[#94A3B8] truncate">David Miller · to me · {demo.time}</div>
+                  </div>
+                )}
+                {demo.id === "slack" && (
+                  <div className="flex items-center gap-2 px-5 py-3.5 bg-[#1A1D21] border-b border-white/[0.06]">
+                    <Hash className="w-4 h-4 text-[#E8E8E8]" />
+                    <span className="text-white font-semibold">{demo.thread}</span>
+                    <span className="ml-auto text-xs text-[#94A3B8]">3 members</span>
+                  </div>
+                )}
+
+                {/* Conversation */}
+                <div
+                  className={`relative flex-1 p-5 overflow-hidden ${
+                    demo.id === "whatsapp" ? "bg-[#0B141A]/80" : demo.id === "slack" ? "bg-[#1A1D21]/50" : "bg-[#0E1424]/60"
                   }`}
+                  style={
+                    demo.id === "whatsapp"
+                      ? {
+                          backgroundImage: "radial-gradient(circle at 1px 1px, rgba(74,222,128,0.07) 1px, transparent 0)",
+                          backgroundSize: "18px 18px",
+                        }
+                      : undefined
+                  }
                 >
-                  {scoping ? "Scoping…" : "Drafted in 0.2s"}
-                </span>
+                  {/* Scan line while the agent reads */}
+                  {scoping && (
+                    <motion.div
+                      initial={{ top: "-30%" }}
+                      animate={{ top: "110%" }}
+                      transition={{ duration: 0.75, ease: "linear" }}
+                      className="absolute left-0 right-0 h-20 bg-gradient-to-b from-transparent via-[#84CC16]/25 to-transparent pointer-events-none z-10"
+                      aria-hidden="true"
+                    />
+                  )}
+
+                  {(() => {
+                    const body = (
+                      <p className="text-base sm:text-[17px] text-[#F1F5F9] leading-[1.85]">
+                        {demo.parts.map((p, i) =>
+                          typeof p === "string" ? (
+                            <span key={i}>{p}</span>
+                          ) : (
+                            <span
+                              key={i}
+                              onMouseEnter={() => setActiveLinks(p.links)}
+                              onMouseLeave={() => setActiveLinks(null)}
+                              className={`inline-block cursor-help px-1.5 rounded-md font-semibold border transition-all duration-200 ${
+                                scoping
+                                  ? "bg-transparent text-[#F1F5F9] border-transparent"
+                                  : isLinked(p.links)
+                                  ? "bg-[#84CC16] text-black border-[#84CC16] -translate-y-0.5 shadow-[0_8px_22px_-6px_rgba(132,204,22,0.75)]"
+                                  : "bg-[#84CC16]/15 text-[#BEF264] border-[#84CC16]/40 hover:bg-[#84CC16]/25"
+                              }`}
+                            >
+                              {p.hl}
+                            </span>
+                          )
+                        )}
+                      </p>
+                    );
+                    if (demo.id === "whatsapp")
+                      return (
+                        <div className="max-w-[94%] rounded-2xl rounded-tl-sm bg-[#1F2C34] px-4 pt-3 pb-2 shadow-lg">
+                          {body}
+                          <div className="flex justify-end items-center gap-1 text-[11px] text-[#94A3B8] mt-1">
+                            <span>{demo.time}</span>
+                            <span className="text-[#53BDEB] font-bold tracking-[-0.2em]">✓✓</span>
+                          </div>
+                        </div>
+                      );
+                    if (demo.id === "slack")
+                      return (
+                        <div className="flex gap-3">
+                          <span className="h-10 w-10 shrink-0 rounded-lg bg-[#E01E5A]/20 text-[#F472B6] flex items-center justify-center text-sm font-bold">
+                            {demo.initials}
+                          </span>
+                          <div>
+                            <div className="flex items-baseline gap-2">
+                              <span className="text-white font-bold">Priya Nair</span>
+                              <span className="text-xs text-[#94A3B8]">{demo.time}</span>
+                            </div>
+                            {body}
+                          </div>
+                        </div>
+                      );
+                    return (
+                      <div className="space-y-3 text-[#F1F5F9]">
+                        <div className="text-base">Hi Alex,</div>
+                        {body}
+                        <div className="text-base text-[#CBD5E1]">Best, David</div>
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                {/* What the agent understood */}
+                <div className="px-5 py-4 border-t border-white/[0.06] bg-[#0B1120]/70 space-y-2.5">
+                  <div className="flex items-center gap-2 text-[11px] font-mono tracking-[0.18em] text-[#64748B]">
+                    <span className={`h-1.5 w-1.5 rounded-full ${scoping ? "bg-[#F59E0B]" : "bg-[#84CC16]"} animate-pulse`} />
+                    {scoping ? "READING THE MESSAGE…" : "WHAT THE AGENT UNDERSTOOD"}
+                  </div>
+                  <div className="flex flex-wrap gap-2 min-h-[32px]">
+                    {!scoping &&
+                      [
+                        ["Scope", `${demo.items.length} line items`],
+                        ["Price", money(demoTotal)],
+                        ["Terms", demo.terms],
+                      ].map(([k, v], i) => (
+                        <motion.span
+                          key={demo.id + k}
+                          initial={{ opacity: 0, scale: 0.85 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ duration: 0.3, delay: 0.1 + i * 0.08 }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#84CC16]/10 border border-[#84CC16]/25 text-sm"
+                        >
+                          <span className="text-[#94A3B8]">{k}</span>
+                          <span className="text-[#D9F99D] font-semibold">{v}</span>
+                        </motion.span>
+                      ))}
+                  </div>
+                  <div className="text-xs text-[#64748B]">Hover a highlight to trace it into the invoice</div>
+                </div>
+              </motion.div>
+            </AnimatePresence>
+          </TiltCard>
+
+          {/* ── Invoice document ── */}
+          <TiltCard wrapperClassName="md:col-span-7" className="rounded-3xl panel overflow-hidden">
+            <div className="h-1.5 w-full bg-gradient-to-r from-[#84CC16] via-[#38BDF8] to-[#0284C7]" />
+            <div className="relative p-6 sm:p-7 space-y-6">
+              {/* SENT stamp */}
+              <AnimatePresence>
+                {sent && (
+                  <motion.div
+                    initial={{ scale: 2.2, opacity: 0, rotate: -26 }}
+                    animate={{ scale: 1, opacity: 1, rotate: -12 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ type: "spring", stiffness: 320, damping: 16 }}
+                    className="absolute right-8 top-20 z-20 px-4 py-1 rounded-lg border-[3px] border-[#34D399] text-[#34D399] font-display font-bold text-2xl tracking-[0.25em] bg-[#34D399]/[0.06] pointer-events-none"
+                  >
+                    SENT
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Header */}
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <span className="h-11 w-11 rounded-xl bg-[#0079C1]/15 border border-[#0079C1]/40 flex items-center justify-center">
+                    <svg className="w-5 h-5" viewBox="0 0 34 32" fill="none" aria-hidden="true">
+                      <path
+                        d="M10.8 3.5H3.9C3.5 3.5 3.2 3.8 3.1 4.2L0 26C-0.03 26.3 0.2 26.6 0.5 26.6H4.2C4.6 26.6 4.9 26.3 5 25.9L6.1 18.6C6.2 18.2 6.5 17.9 6.9 17.9H9.3C14.6 17.9 17.6 15.3 18.4 10.4C18.7 8.3 18.3 6.6 17.1 5.4C15.9 4.1 13.9 3.5 10.8 3.5Z"
+                        fill="#38BDF8"
+                      />
+                    </svg>
+                  </span>
+                  <div>
+                    <div className="font-display font-bold text-2xl text-white leading-none">Invoice</div>
+                    <div className="mt-1 text-sm font-mono text-[#94A3B8]">INV-2024-0{17 + demoIndex}</div>
+                  </div>
+                </div>
+                <div className="text-right space-y-1.5">
+                  <span
+                    className={`inline-block text-xs sm:text-sm font-mono px-3 py-1 rounded-full border transition-colors ${
+                      scoping
+                        ? "text-[#F59E0B] bg-[#F59E0B]/10 border-[#F59E0B]/25"
+                        : "text-[#10B981] bg-[#10B981]/10 border-[#10B981]/25"
+                    }`}
+                  >
+                    {scoping ? "Scoping…" : "Drafted in 0.2s"}
+                  </span>
+                  <div className="text-sm text-[#CBD5E1]">{demo.due}</div>
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 text-sm sm:text-base">
-                <div>
-                  <span className="text-[#94A3B8] block text-xs uppercase font-mono mb-1 tracking-wider">Billed to</span>
-                  <span className="font-semibold text-white">{demo.client}</span>
-                </div>
-                <div className="text-right">
-                  <span className="text-[#94A3B8] block text-xs uppercase font-mono mb-1 tracking-wider">Terms</span>
-                  <span className="font-mono text-white">{demo.terms}</span>
-                </div>
+              {/* Parties */}
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { k: "From", name: "Alex Rivera", sub: "Brand & web design", ini: "AR", tint: "#84CC16" },
+                  { k: "Bill to", name: demo.client.split(" · ")[0], sub: demo.client.split(" · ")[1], ini: demo.initials, tint: "#38BDF8" },
+                ].map((party) => (
+                  <div key={party.k} className="rounded-2xl bg-[#0B1120]/60 border border-white/[0.06] p-3.5 flex items-center gap-3">
+                    <span
+                      className="h-9 w-9 shrink-0 rounded-full flex items-center justify-center text-xs font-bold"
+                      style={{ background: `${party.tint}22`, color: party.tint }}
+                    >
+                      {party.ini}
+                    </span>
+                    <div className="min-w-0">
+                      <div className="text-[11px] font-mono uppercase tracking-wider text-[#64748B]">{party.k}</div>
+                      <div className="text-sm sm:text-base font-semibold text-white truncate">{party.name}</div>
+                      <div className="text-xs text-[#94A3B8] truncate">{party.sub}</div>
+                    </div>
+                  </div>
+                ))}
               </div>
 
-              <div className="space-y-2.5">
-                <span className="text-[#94A3B8] block text-xs uppercase font-mono tracking-wider">Scoped line items</span>
+              {/* Line items table */}
+              <div>
+                <div className="flex justify-between px-4 pb-2 text-[11px] font-mono uppercase tracking-wider text-[#64748B]">
+                  <span>Description</span>
+                  <span>Amount</span>
+                </div>
                 <div className="space-y-2 min-h-[116px]">
                   {scoping
                     ? [0, 1].map((i) => <div key={i} className="h-[52px] rounded-xl skeleton" />)
-                    : demo.items.map(([label, amt], i) => (
-                        <motion.div
-                          key={demo.id + label}
-                          initial={{ opacity: 0, x: -16 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ duration: 0.45, delay: i * 0.12, ease: transitionEase }}
-                          className="px-4 py-3.5 rounded-xl bg-[#0D1220] border border-[#202B3D] flex items-center justify-between gap-4 text-sm sm:text-base hover:border-[#84CC16]/40 transition-colors"
-                        >
-                          <span className="text-[#F8FAFC]">{label}</span>
-                          <span className="font-mono font-semibold text-white tabular-nums">{money(amt)}</span>
-                        </motion.div>
-                      ))}
+                    : demo.items.map(([label, amt], i) => {
+                        const lit = isLinked([i]);
+                        return (
+                          <motion.div
+                            key={demo.id + label}
+                            initial={{ opacity: 0, x: -16 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.45, delay: i * 0.12, ease: transitionEase }}
+                            onMouseEnter={() => setActiveLinks([i])}
+                            onMouseLeave={() => setActiveLinks(null)}
+                            className={`px-4 py-3.5 rounded-xl border flex items-center justify-between gap-4 text-sm sm:text-base cursor-help transition-all duration-200 ${
+                              lit
+                                ? "bg-[#84CC16]/[0.08] border-[#84CC16]/60 shadow-[0_0_26px_-8px_rgba(132,204,22,0.6)]"
+                                : "bg-[#0B1120]/70 border-white/[0.06]"
+                            }`}
+                          >
+                            <span className="text-[#F8FAFC]">{label}</span>
+                            <span
+                              className={`font-mono font-semibold tabular-nums transition-colors ${
+                                lit ? "text-[#BEF264]" : "text-white"
+                              }`}
+                            >
+                              {money(amt)}
+                            </span>
+                          </motion.div>
+                        );
+                      })}
                 </div>
               </div>
 
-              <div className="flex items-center justify-between pt-4 border-t border-[#202B3D]">
-                <span className="text-base text-[#CBD5E1]">Total amount</span>
-                <AnimatePresence mode="wait">
-                  <motion.span
-                    key={scoping ? "scoping" : demo.id}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    transition={{ duration: 0.3 }}
-                    className="text-2xl sm:text-3xl font-bold text-white tabular-nums"
-                  >
-                    {scoping ? "…" : `${money(demoTotal)} USD`}
-                  </motion.span>
-                </AnimatePresence>
+              {/* Totals */}
+              <div className="ml-auto w-full sm:w-72 space-y-1.5 text-sm">
+                <div className="flex justify-between text-[#94A3B8]">
+                  <span>Subtotal</span>
+                  <span className="font-mono tabular-nums">{scoping ? "…" : money(demoTotal)}</span>
+                </div>
+                <div className="flex justify-between text-[#94A3B8]">
+                  <span>Tax</span>
+                  <span className="font-mono tabular-nums">$0.00</span>
+                </div>
+                <div
+                  onMouseEnter={() => setActiveLinks(["total"])}
+                  onMouseLeave={() => setActiveLinks(null)}
+                  className="flex items-baseline justify-between pt-2 border-t border-white/[0.08] cursor-help"
+                >
+                  <span className="text-base text-[#CBD5E1]">Total</span>
+                  <AnimatePresence mode="wait">
+                    <motion.span
+                      key={scoping ? "scoping" : demo.id}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      transition={{ duration: 0.3 }}
+                      className={`font-display text-3xl font-bold tabular-nums tracking-[-0.03em] transition-colors ${
+                        isLinked(["total"]) ? "text-[#BEF264]" : "text-white"
+                      }`}
+                    >
+                      {scoping ? "…" : money(demoTotal)}
+                    </motion.span>
+                  </AnimatePresence>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="pt-5 border-t border-white/[0.06] flex flex-wrap items-center justify-between gap-3">
+                <span className="inline-flex items-center gap-1 px-5 py-2.5 rounded-full bg-[#FFC439] text-[#003087] font-bold italic text-sm sm:text-base shadow-[0_6px_18px_-8px_rgba(255,196,57,0.8)] select-none">
+                  Pay with <span className="not-italic">Pay</span>
+                  <span className="text-[#009CDE] not-italic -ml-1">Pal</span>
+                </span>
+                <button
+                  disabled={scoping}
+                  onClick={() => {
+                    setAutoplay(false);
+                    setSentFor(demo.id);
+                  }}
+                  className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm sm:text-base font-bold transition-all active:scale-95 disabled:opacity-50 ${
+                    sent
+                      ? "bg-[#10B981]/15 text-[#34D399] border border-[#10B981]/40"
+                      : "bg-[#84CC16] text-black hover:bg-[#9BE329] shadow-[0_8px_24px_-8px_rgba(132,204,22,0.7)]"
+                  }`}
+                >
+                  {sent ? <CheckCircle2 className="w-4 h-4" /> : <Send className="w-4 h-4" />}
+                  <span>{sent ? `Sent to ${demo.client.split(" ")[0]}` : "Send to client"}</span>
+                </button>
               </div>
             </div>
-
-            <div className="pt-4 border-t border-[#202B3D] flex items-center justify-between text-sm">
-              <span className="text-[#10B981] flex items-center gap-2 font-medium">
-                <CheckCircle2 className="w-4 h-4" />
-                <span>Sent through PayPal Sandbox</span>
-              </span>
-              <span className="text-xs font-mono text-[#64748B]">Example invoice</span>
-            </div>
-          </div>
+          </TiltCard>
         </div>
       </section>
 
       {/* ── Stats band ── */}
-      <section className="relative z-10 py-16 px-6">
+      <section data-flow="1" className="relative z-10 py-16 px-6">
         <div className="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
           {[
             { node: <Counter to={0.2} decimals={1} suffix="s" />, label: "to draft a PayPal invoice" },
@@ -818,195 +1391,161 @@ export function ScrollStory() {
 
       <AsciiRule />
 
-      {/* ── 3. The chase timeline (scroll-driven + clickable) ── */}
-      <section id="timeline" ref={timelineWrapperRef} className="relative z-10 md:min-h-[300vh] px-6 py-16 md:py-0">
-        <div className="relative isolate md:sticky md:top-20 max-w-6xl mx-auto space-y-8 md:pt-6 pb-12">
-          {/* Amber ASCII band behind the chase */}
-          <div
-            className="absolute left-1/2 -translate-x-1/2 top-0 w-screen h-[520px] -z-10 opacity-40 pointer-events-none"
-            style={{
-              WebkitMaskImage: "radial-gradient(ellipse 60% 55% at 50% 45%, #000 20%, transparent 75%)",
-              maskImage: "radial-gradient(ellipse 60% 55% at 50% 45%, #000 20%, transparent 75%)",
-            }}
-            aria-hidden="true"
-          >
-            <GradientASCII
-              colors={["#080B14", "#1F2937", "#B45309", "#F59E0B"]}
-              shape="pinch"
-              characters=" =+xX0S8#@"
-              cellSize={16}
-              density={0.8}
-              glow={0.45}
-              speed={0.5}
-              flow={0.5}
-              mouseInteraction={true}
-              clickEffect="burst"
+      {/* ── 3. The chase: a horizontal timeline, pinned while you scroll down ── */}
+      <section id="timeline" ref={timelineWrapperRef} className="relative z-10 md:h-[420vh] py-20 md:py-0">
+        {/* Green flow stays at a medium swell throughout the chase */}
+        <div data-flow="0.5" className="absolute top-[50vh] left-0 w-full h-0" aria-hidden="true" />
+        <div data-flow="0.5" className="absolute bottom-[50vh] left-0 w-full h-0" aria-hidden="true" />
+
+        <div className="md:sticky md:top-0 md:h-screen md:overflow-hidden flex flex-col justify-center gap-8 md:gap-9 md:pt-16">
+          <div className="px-6">
+            <SectionHeading
+              compact
+              eyebrow="THE CHASE · SCROLL TO TRAVEL THROUGH TIME"
+              dot="#F59E0B"
+              title={
+                <>
+                  Time passes. <span className="text-gradient-lime accent-serif">The agent remembers.</span>
+                </>
+              }
+              sub="One unpaid invoice, eighteen days, zero awkward emails written by you."
             />
           </div>
-          <SectionHeading
-            num="02"
-          compact
-          eyebrow="THE CHASE · SCROLL OR TAP A DAY"
-            dot="#F59E0B"
-            title={
-              <>
-                Time passes. <span className="text-gradient-lime accent-serif">The agent remembers.</span>
-              </>
-            }
-            sub="It watches PayPal for payment, even when your laptop is closed, and escalates politely only when it needs to."
-          />
 
-          <div className="p-6 sm:p-8 rounded-3xl panel space-y-8 card-sheen">
-            {/* Track with clickable day nodes */}
-            <div className="relative px-2 sm:px-6">
-              <div className="absolute left-2 right-2 sm:left-6 sm:right-6 top-[11px] h-1.5 bg-[#1E293B] rounded-full overflow-hidden">
-                <motion.div
-                  animate={{ width: `${(stageIndex / (STAGES.length - 1)) * 100}%` }}
-                  transition={{ type: "spring", stiffness: 120, damping: 22 }}
-                  className="h-full bg-gradient-to-r from-[#0284C7] via-[#84CC16] to-[#BEF264] shadow-[0_0_12px_rgba(132,204,22,0.6)]"
-                />
-              </div>
-              <div className="relative flex justify-between">
-                {STAGES.map((s, i) => {
-                  const reached = i <= stageIndex;
-                  const current = i === stageIndex;
-                  return (
-                    <button
-                      key={s.day}
-                      onClick={() => pickStage(i)}
-                      className="group flex flex-col items-center gap-2 focus:outline-none"
-                      aria-pressed={current}
-                    >
-                      <span
-                        className={`h-6 w-6 rounded-full border-2 transition-all duration-300 flex items-center justify-center ${
-                          current ? "scale-125" : "group-hover:scale-110"
-                        }`}
-                        style={{
-                          borderColor: reached ? s.color : "#334155",
-                          background: current ? s.color : "#0D1220",
-                          boxShadow: current ? `0 0 18px ${s.color}` : "none",
-                        }}
-                      />
-                      <span
-                        className="text-sm sm:text-base font-bold font-mono transition-colors"
-                        style={{ color: reached ? s.color : "#64748B" }}
-                      >
-                        {s.day}
-                      </span>
-                      <span className="hidden sm:block text-xs sm:text-sm text-[#94A3B8]">{s.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Stage content */}
-            <AnimatePresence mode="wait">
+          {/* Horizontal day track */}
+          <div className="px-6 w-full max-w-6xl mx-auto">
+            <div className="relative h-[78px]">
+              <div className="absolute left-0 right-0 top-[18px] h-1 rounded-full bg-white/[0.08]" />
               <motion.div
-                key={stage.day}
-                initial={{ opacity: 0, y: 14 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.35, ease: transitionEase }}
-                className="grid grid-cols-1 md:grid-cols-12 gap-6 items-stretch"
-              >
-                <Spot className="md:col-span-7 p-6 rounded-2xl panel space-y-4 card-interactive">
-                  <div className="flex items-center justify-between gap-3 pb-3 border-b border-[#202B3D]">
-                    <span className="text-sm text-[#94A3B8] font-mono">Email the agent sends</span>
+                className="absolute left-0 right-0 top-[18px] h-1 rounded-full origin-left bg-gradient-to-r from-[#16A34A] via-[#F59E0B] to-[#EF4444] shadow-[0_0_14px_rgba(245,158,11,0.45)]"
+                style={{ scaleX: pinned ? railFill : (stageIndex + 0.5) / STAGES.length }}
+              />
+              {pinned && (
+                <motion.div
+                  className="absolute top-[10px] -ml-[10px] h-5 w-5 rounded-full bg-white z-20 shadow-[0_0_0_5px_rgba(255,255,255,0.10),0_0_26px_rgba(163,230,53,0.9)]"
+                  style={{ left: playheadLeft }}
+                  aria-hidden="true"
+                />
+              )}
+              {STAGES.map((s, i) => {
+                const reached = i <= stageIndex;
+                const current = i === stageIndex;
+                return (
+                  <button
+                    key={s.day}
+                    onClick={() => goToStage(i)}
+                    aria-current={current ? "step" : undefined}
+                    className="absolute top-0 -translate-x-1/2 flex flex-col items-center gap-1.5 group z-10"
+                    style={{ left: `${((i + 0.5) / STAGES.length) * 100}%` }}
+                  >
                     <span
-                      className="text-xs sm:text-sm font-mono px-3 py-1 rounded-full border"
-                      style={{ color: stage.color, borderColor: `${stage.color}40`, background: `${stage.color}14` }}
+                      className="mt-[11px] h-[18px] w-[18px] rounded-full border-2 transition-all duration-300 group-hover:scale-125"
+                      style={{
+                        borderColor: reached ? s.color : "#334155",
+                        background: current ? s.color : "#0B1120",
+                        boxShadow: current ? `0 0 18px ${s.color}` : "none",
+                      }}
+                    />
+                    <span
+                      className="font-mono text-sm sm:text-base font-bold transition-colors"
+                      style={{ color: reached ? s.color : "#64748B" }}
                     >
-                      {stage.badge}
+                      {s.day}
                     </span>
-                  </div>
-                  <div className="space-y-3">
-                    <div>
-                      <span className="text-[#94A3B8] block text-xs font-mono uppercase tracking-wider mb-1">Subject</span>
-                      <span className="font-semibold text-white text-base sm:text-lg">{stage.subject}</span>
-                    </div>
-                    <p className="text-[#E2E8F0] text-base leading-relaxed bg-[#080B14] p-4 rounded-xl border border-[#202B3D]">
-                      &ldquo;{stage.body}&rdquo;
-                    </p>
-                  </div>
-                </Spot>
+                    <span
+                      className={`hidden sm:block text-xs whitespace-nowrap transition-colors ${
+                        current ? "text-white" : "text-[#64748B]"
+                      }`}
+                    >
+                      {s.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
-                <Spot className="md:col-span-5 p-6 rounded-2xl panel space-y-4 card-interactive">
-                  <div className="flex items-center justify-between pb-3 border-b border-[#202B3D]">
-                    <span className="font-bold text-white text-base flex items-center gap-2">
-                      <LottieAutonomousBot size={30} className="shrink-0" />
-                      <span>Why it did this</span>
-                    </span>
-                    <span className="text-xs font-mono text-[#84CC16] bg-[#84CC16]/10 px-2.5 py-1 rounded-full border border-[#84CC16]/25">
-                      Audit log
-                    </span>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="p-4 rounded-xl bg-[#0D1220] border border-[#202B3D] space-y-1.5">
-                      <span className="text-xs font-mono tracking-wider" style={{ color: stage.color }}>
-                        {stage.day.toUpperCase()} · REASONING
-                      </span>
-                      <p className="text-[#F8FAFC] text-base leading-relaxed">{stage.audit}</p>
+          {/* Horizontal strip of day cards */}
+          <div
+            ref={stripViewportRef}
+            onScroll={onStripScroll}
+            className="w-full overflow-x-auto md:overflow-visible snap-x snap-mandatory md:snap-none no-scrollbar"
+          >
+            <motion.div
+              ref={stripRef}
+              style={pinned ? { x: stripX } : undefined}
+              className="flex gap-6 w-max px-6 md:px-0 py-2"
+            >
+              {STAGES.map((s, i) => {
+                const current = i === stageIndex;
+                return (
+                  <div
+                    key={s.day}
+                    data-card
+                    onClick={() => goToStage(i)}
+                    className={`snap-center shrink-0 w-[82vw] sm:w-[460px] md:w-[540px] panel rounded-3xl overflow-hidden transition-all duration-500 ${
+                      current ? "opacity-100 scale-100" : "opacity-40 scale-[0.93] cursor-pointer hover:opacity-70"
+                    }`}
+                    style={current ? { boxShadow: `0 0 0 1px ${s.color}55, 0 30px 80px -30px ${s.color}88` } : undefined}
+                  >
+                    <div className="h-1" style={{ background: s.color }} />
+                    <div className="p-6 sm:p-7 space-y-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-baseline gap-3">
+                          <span className="font-display font-bold text-4xl tracking-[-0.04em]" style={{ color: s.color }}>
+                            {s.day}
+                          </span>
+                          <span className="text-base text-[#CBD5E1]">{s.status}</span>
+                        </div>
+                        <span
+                          className="text-xs font-mono px-3 py-1 rounded-full border whitespace-nowrap"
+                          style={{ color: s.color, borderColor: `${s.color}40`, background: `${s.color}14` }}
+                        >
+                          {s.badge}
+                        </span>
+                      </div>
+                      <div className="rounded-2xl bg-[#0B1120]/70 border border-white/[0.06] p-4 space-y-2">
+                        <div className="text-[11px] font-mono tracking-[0.15em] text-[#64748B]">
+                          EMAIL TO SARAH · SENT AUTOMATICALLY
+                        </div>
+                        <div className="text-white font-semibold text-base sm:text-lg leading-snug">{s.subject}</div>
+                        <p className="text-[15px] sm:text-base text-[#CBD5E1] leading-relaxed">{s.body}</p>
+                      </div>
+                      <div className="flex items-start gap-3 text-[15px] text-[#CBD5E1] leading-relaxed">
+                        <Bot className="w-5 h-5 shrink-0 mt-0.5" style={{ color: s.color }} />
+                        <span>{s.audit}</span>
+                      </div>
+                      <div className="text-xs sm:text-sm font-mono text-[#94A3B8]">{s.guard}</div>
                     </div>
-                    <div className="p-4 rounded-xl bg-[#0D1220] border border-[#202B3D] flex items-center gap-2.5 text-sm sm:text-base text-[#CBD5E1]">
-                      <Clock className="w-4 h-4 shrink-0" style={{ color: stage.color }} />
-                      <span className="font-mono">{stage.guard}</span>
-                    </div>
                   </div>
-                </Spot>
-              </motion.div>
-            </AnimatePresence>
+                );
+              })}
+            </motion.div>
+          </div>
+
+          <div className="hidden md:flex justify-center items-center gap-2 text-sm text-[#64748B]">
+            <Mouse className="w-4 h-4 text-[#A3E635] cue-bounce" />
+            <span>
+              {stageIndex < STAGES.length - 1 ? "Keep scrolling to move forward in time" : "Scroll on to see it get paid"}
+            </span>
           </div>
         </div>
       </section>
 
-      {/* ── 4. Payment lands (interactive) ── */}
-      <section className="relative z-10 py-24 px-6 max-w-4xl mx-auto">
-        <div
-          className={`p-8 sm:p-14 rounded-[2rem] bg-[#0B1120]/80 border text-center space-y-8 relative isolate overflow-hidden card-sheen transition-all duration-700 ${
-            paid
-              ? "border-[#10B981]/50 shadow-[0_0_80px_rgba(16,185,129,0.22)]"
-              : "border-[#202B3D] shadow-[0_0_40px_rgba(2,132,199,0.08)]"
-          }`}
-        >
-          <div
-            className="aurora-blob halo-pulse"
-            style={{
-              width: 460,
-              height: 460,
-              top: -160,
-              left: "50%",
-              marginLeft: -230,
-              background: paid ? "rgba(16,185,129,0.28)" : "rgba(2,132,199,0.18)",
-              transition: "background 0.7s ease",
-            }}
-            aria-hidden="true"
-          />
+      {/* ── 4. Payment lands: sits on the shared page background, orbit behind the copy ── */}
+      <section data-flow="0.3" className="relative z-10 isolate overflow-hidden min-h-[820px] md:min-h-[920px] flex items-center justify-center px-6 py-24">
+        {/* Orbiting status chips, radar sweep and payment shockwave */}
+        <PaymentOrbit paid={paid} />
 
-          {/* ASCII eclipse that turns green when the payment lands */}
-          <div className="absolute inset-0 -z-10 opacity-60 pointer-events-none" aria-hidden="true">
-            <GradientASCII
-              colors={
-                paid
-                  ? ["#080B14", "#064E3B", "#10B981", "#BEF264"]
-                  : ["#080B14", "#172554", "#0284C7", "#38BDF8"]
-              }
-              shape="eclipse"
-              characters=" =+xX0S8#@"
-              cellSize={14}
-              density={0.85}
-              glow={0.6}
-              speed={0.6}
-              softness={0.8}
-              mouseInteraction={true}
-              clickEffect="wave"
-            />
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_40%_at_50%_55%,rgba(8,11,20,0.85),transparent_80%)]" />
+        <div className="relative w-full max-w-3xl mx-auto text-center space-y-9">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#111827]/80 border border-white/[0.08] text-xs sm:text-sm font-mono text-[#CBD5E1] backdrop-blur-md">
+            <span className="h-2 w-2 rounded-full animate-pulse" style={{ background: paid ? "#4ADE80" : "#84CC16" }} />
+            <span className="tracking-[0.18em]">PAYMENT LANDS · TRY IT</span>
           </div>
 
           {/* PayPal → $ handshake */}
-          <div className="relative mx-auto flex items-center justify-center gap-4">
-            <div className="h-16 w-16 rounded-full bg-gradient-to-br from-[#003087]/30 via-[#0079C1]/20 to-[#0D1220] border border-[#0079C1]/50 flex items-center justify-center shadow-[0_0_25px_rgba(0,121,193,0.35)]">
+          <div className="mx-auto flex items-center justify-center gap-4">
+            <div className="h-16 w-16 rounded-full bg-gradient-to-br from-[#003087]/40 via-[#0079C1]/25 to-[#0D1220] border border-[#0079C1]/50 flex items-center justify-center shadow-[0_0_25px_rgba(0,121,193,0.35)]">
               <svg className="w-7 h-7" viewBox="0 0 34 32" fill="none" aria-label="PayPal">
                 <path
                   d="M10.8 3.5H3.9C3.5 3.5 3.2 3.8 3.1 4.2L0 26C-0.03 26.3 0.2 26.6 0.5 26.6H4.2C4.6 26.6 4.9 26.3 5 25.9L6.1 18.6C6.2 18.2 6.5 17.9 6.9 17.9H9.3C14.6 17.9 17.6 15.3 18.4 10.4C18.7 8.3 18.3 6.6 17.1 5.4C15.9 4.1 13.9 3.5 10.8 3.5Z"
@@ -1019,7 +1558,7 @@ export function ScrollStory() {
               </svg>
             </div>
 
-            <div className="relative w-20 h-1 rounded-full bg-[#1E293B] overflow-hidden">
+            <div className="relative w-24 h-1 rounded-full bg-white/10 overflow-hidden">
               <motion.div
                 animate={{ width: paid ? "100%" : "0%" }}
                 transition={{ duration: 0.8, ease: transitionEase }}
@@ -1033,24 +1572,26 @@ export function ScrollStory() {
               className={`h-16 w-16 rounded-full border flex items-center justify-center transition-all duration-500 ${
                 paid
                   ? "bg-gradient-to-br from-[#84CC16]/35 via-[#10B981]/20 to-[#0D1220] border-[#84CC16]/60 shadow-[0_0_30px_rgba(132,204,22,0.45)]"
-                  : "bg-[#111827] border-[#2A3850]"
+                  : "bg-[#0B1120] border-white/15"
               }`}
             >
               <span className={`text-3xl font-black font-mono leading-none ${paid ? "text-[#84CC16]" : "text-[#475569]"}`}>$</span>
             </motion.div>
           </div>
 
-          <div className="relative space-y-4 max-w-2xl mx-auto">
-            <h3 className="text-4xl sm:text-5xl font-extrabold text-white tracking-tight leading-[1.08]">
-              Payment lands. <span className="text-gradient-lime accent-serif">The chase stops.</span>
+          <div className="space-y-5">
+            <h3 className="text-5xl sm:text-6xl md:text-7xl font-bold text-white tracking-[-0.04em] leading-[1.02]">
+              Payment lands.
+              <br />
+              <span className="text-gradient-lime accent-serif">The chase stops.</span>
             </h3>
-            <p className="text-lg sm:text-xl text-[#CBD5E1] leading-relaxed">
+            <p className="text-lg sm:text-xl text-[#E2E8F0] leading-relaxed max-w-xl mx-auto">
               The moment Sarah pays, PayPal tells the agent. Reminders stop, paused work resumes, and a thank-you note
               goes out on its own.
             </p>
           </div>
 
-          <div className="relative flex flex-col items-center gap-4">
+          <div className="flex flex-col items-center gap-4">
             <AnimatePresence mode="wait">
               <motion.div
                 key={paid ? "paid" : "waiting"}
@@ -1058,10 +1599,10 @@ export function ScrollStory() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.3 }}
-                className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full border text-sm sm:text-base font-mono ${
+                className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full border text-sm sm:text-base font-mono backdrop-blur-md ${
                   paid
-                    ? "bg-[#10B981]/10 border-[#10B981]/30 text-[#34D399]"
-                    : "bg-[#F59E0B]/10 border-[#F59E0B]/30 text-[#FBBF24]"
+                    ? "bg-[#10B981]/15 border-[#10B981]/40 text-[#34D399]"
+                    : "bg-[#F59E0B]/10 border-[#F59E0B]/35 text-[#FBBF24]"
                 }`}
               >
                 {paid ? <CheckCircle2 className="w-5 h-5" /> : <Clock className="w-5 h-5" />}
@@ -1071,13 +1612,13 @@ export function ScrollStory() {
 
             <button
               onClick={simulatePayment}
-              className={`flex items-center gap-2 px-7 py-3.5 rounded-full text-base font-bold transition-all active:scale-95 ${
+              className={`flex items-center gap-2 px-8 py-4 rounded-full text-base sm:text-lg font-bold transition-all active:scale-95 ${
                 paid
-                  ? "bg-[#111827] border border-[#2A3850] text-[#CBD5E1] hover:text-white"
-                  : "bg-[#84CC16] text-black hover:bg-[#9BE329] shadow-[0_10px_30px_-8px_rgba(132,204,22,0.65)]"
+                  ? "bg-[#0B1120]/80 border border-white/15 text-[#CBD5E1] hover:text-white backdrop-blur-md"
+                  : "bg-[#84CC16] text-black hover:bg-[#9BE329] shadow-[0_12px_34px_-8px_rgba(132,204,22,0.7)]"
               }`}
             >
-              {paid ? <RotateCcw className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
+              {paid ? <RotateCcw className="w-5 h-5" /> : <Sparkles className="w-5 h-5" />}
               <span>{paid ? "Reset demo" : "Simulate a PayPal payment"}</span>
             </button>
           </div>
@@ -1086,10 +1627,11 @@ export function ScrollStory() {
 
       <AsciiRule />
 
+      <div data-flow="0.75" className="h-0" aria-hidden="true" />
+
       {/* ── 5. Ask it anything (typed queries) ── */}
       <section id="assistant" ref={askRef} className="relative z-10 py-24 px-6 max-w-4xl mx-auto space-y-10 scroll-mt-20">
         <SectionHeading
-          num="03"
           eyebrow="ASK IT ANYTHING"
           dot="#38BDF8"
           title={
@@ -1116,7 +1658,7 @@ export function ScrollStory() {
           ))}
         </div>
 
-        <Spot className="p-6 sm:p-8 rounded-3xl panel space-y-5 card-sheen">
+        <Spot data-flow="0.15" className="p-6 sm:p-8 rounded-3xl panel space-y-5 card-sheen">
           <div className="flex items-center gap-3 px-5 py-4 rounded-2xl bg-[#172033] border border-[#2A3850] text-base sm:text-lg font-mono text-white">
             <Search className="w-5 h-5 text-[#84CC16] shrink-0" />
             <span>{query.q.slice(0, typed)}</span>
@@ -1168,9 +1710,8 @@ export function ScrollStory() {
       <AsciiRule />
 
       {/* ── 6. How it works ── */}
-      <section id="how-it-works" className="relative z-10 py-24 px-6 max-w-6xl mx-auto space-y-14 scroll-mt-20">
+      <section data-flow="0.6" id="how-it-works" className="relative z-10 py-24 px-6 max-w-6xl mx-auto space-y-14 scroll-mt-20">
         <SectionHeading
-          num="04"
           eyebrow="HOW IT WORKS"
           dot="#84CC16"
           title={
@@ -1215,10 +1756,7 @@ export function ScrollStory() {
                   <div className="mx-auto h-14 w-14 rounded-2xl bg-gradient-to-br from-[#84CC16]/25 to-[#0284C7]/15 text-[#BEF264] border border-[#84CC16]/30 flex items-center justify-center shadow-[0_0_24px_-4px_rgba(132,204,22,0.45)]">
                     <Icon className="w-6 h-6" />
                   </div>
-                  <div className="numeral absolute top-5 right-6 text-7xl" aria-hidden="true">
-                    0{step.n}
-                  </div>
-                  <div className="text-xs font-mono text-[#84CC16]/80 tracking-[0.25em]">STEP 0{step.n}</div>
+                  <div className="text-xs font-mono text-[#84CC16]/80 tracking-[0.25em]">STEP {step.n}</div>
                   <h4 className="text-2xl font-bold text-white">{step.title}</h4>
                   <p className="text-base text-[#CBD5E1] leading-relaxed">{step.text}</p>
                 </Spot>
@@ -1237,11 +1775,11 @@ export function ScrollStory() {
       </section>
 
       {/* ── 7. Final CTA ── */}
-      <section className="relative z-10 isolate overflow-hidden px-6 pt-36 pb-44">
+      <section data-flow="0" className="relative z-10 isolate overflow-hidden px-6 pt-36 pb-44">
         {/* Sunrise ASCII: bookends the hero */}
         <div className="absolute inset-0 -z-10 opacity-60" aria-hidden="true">
           <GradientASCII
-            colors={["#080B14", "#172554", "#0284C7", "#84CC16"]}
+            colors={["#080B14", "#052E16", "#15803D", "#A3E635"]}
             shape="rise"
             characters=" =+xX0S8#@"
             cellSize={17}
@@ -1279,7 +1817,7 @@ export function ScrollStory() {
       </section>
 
       {/* ── Footer ── */}
-      <footer className="relative z-10 overflow-hidden pt-12 px-6 border-t border-white/[0.08] text-sm text-[#94A3B8]">
+      <footer data-flow="0" className="relative z-10 overflow-hidden pt-12 px-6 border-t border-white/[0.08] text-sm text-[#94A3B8]">
         <div className="max-w-6xl mx-auto flex flex-col items-center gap-5 text-center">
           <div className="flex items-center gap-2">
             <span className="font-bold text-white text-lg">getpaid.</span>

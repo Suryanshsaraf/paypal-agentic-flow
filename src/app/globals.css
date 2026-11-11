@@ -391,3 +391,11 @@
     animation: none !important;
   }
 }
+
+/* Hide scrollbars on horizontal swipe rows */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}

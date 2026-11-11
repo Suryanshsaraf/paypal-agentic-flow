@@ -26,6 +26,8 @@ export function SmoothScrollProvider({ children }: { children: React.ReactNode }
     });
 
     lenisRef.current = lenis;
+    // Exposed so sections (e.g. the timeline's day buttons) can scroll smoothly through Lenis.
+    (window as unknown as { __lenis?: Lenis }).__lenis = lenis;
 
     function raf(time: number) {
       lenis.raf(time);
@@ -37,6 +39,7 @@ export function SmoothScrollProvider({ children }: { children: React.ReactNode }
     return () => {
       cancelAnimationFrame(reqId);
       lenis.destroy();
+      delete (window as unknown as { __lenis?: Lenis }).__lenis;
       lenisRef.current = null;
     };
   }, []);
