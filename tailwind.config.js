@@ -46,8 +46,10 @@ module.exports = {
         },
       },
       fontFamily: {
-        sans: ["var(--font-geist-sans)", "system-ui", "sans-serif"],
-        mono: ["var(--font-geist-mono)", "ui-monospace", "monospace"],
+        sans: ["var(--font-body)", "var(--font-geist-sans)", "system-ui", "sans-serif"],
+        display: ["var(--font-display)", "var(--font-body)", "system-ui", "sans-serif"],
+        serif: ["var(--font-serif)", "Georgia", "serif"],
+        mono: ["var(--font-mono-ui)", "var(--font-geist-mono)", "ui-monospace", "monospace"],
       },
       fontSize: {
         "page-title": ["1.75rem", { lineHeight: "2.25rem", fontWeight: "700", letterSpacing: "-0.025em" }],
