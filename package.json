@@ -7,7 +7,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "npx tsx scripts/test-stage1-foundation.ts && npx tsx scripts/test-stage2-bill.ts && npx tsx scripts/test-stage3-watch.ts && npx tsx scripts/test-stage4-chase.ts && npx tsx scripts/test-stage5-ask.ts",
+    "verify:paypal": "npx tsx scripts/verify-live-paypal.ts"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.3.1",
