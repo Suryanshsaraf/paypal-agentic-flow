@@ -27,6 +27,8 @@ import {
   History,
   FastForward,
   UserCheck,
+  HelpCircle,
+  RotateCcw,
 } from "lucide-react";
 import { Invoice, Client, EventLog } from "@/lib/types";
 import { formatCents, centsToDecimalString } from "@/lib/money";
@@ -45,10 +47,11 @@ export default function AppShell() {
   // Selected Invoice for Reminders Inspection
   const [inspectingInvoice, setInspectingInvoice] = useState<Invoice | null>(null);
 
-  // Copilot Compose & Proposal
+  // Copilot Compose, Proposal & Query Answer
   const [inputText, setInputText] = useState("");
-  const [isScoping, setIsScoping] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [proposal, setProposal] = useState<any | null>(null);
+  const [queryAnswer, setQueryAnswer] = useState<string | null>(null);
   const [isSendingInvoice, setIsSendingInvoice] = useState(false);
   const [successBanner, setSuccessBanner] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -82,7 +85,6 @@ export default function AppShell() {
       const data = await res.json();
       if (data.ok && Array.isArray(data.invoices)) {
         setInvoices(data.invoices);
-        // Refresh inspected invoice if currently selected
         if (inspectingInvoice) {
           const updated = data.invoices.find((i: Invoice) => i.id === inspectingInvoice.id);
           if (updated) setInspectingInvoice(updated);
@@ -107,33 +109,60 @@ export default function AppShell() {
     }
   }
 
-  // Handle Scoping
-  async function handleScopeMessage(textToScope?: string) {
-    const text = textToScope || inputText;
+  // Handle Input Dispatch (Either Financial Query or Invoice Scoping)
+  async function handleSubmitInput(overrideText?: string) {
+    const text = overrideText || inputText;
     if (!text.trim()) return;
 
-    setIsScoping(true);
+    setIsProcessing(true);
     setErrorMessage(null);
     setSuccessBanner(null);
+    setProposal(null);
+    setQueryAnswer(null);
 
-    try {
-      const res = await fetch("/api/invoices/scope", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text }),
-      });
+    const isQuestion =
+      text.includes("?") ||
+      text.toLowerCase().startsWith("who") ||
+      text.toLowerCase().startsWith("how much") ||
+      text.toLowerCase().startsWith("what");
 
-      const data = await res.json();
-      if (!data.ok) {
-        setErrorMessage(data.error || "Failed to scope message.");
-        return;
+    if (isQuestion) {
+      try {
+        const res = await fetch("/api/query", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question: text }),
+        });
+        const data = await res.json();
+        if (data.ok) {
+          setQueryAnswer(data.answer);
+        } else {
+          setErrorMessage(data.error || "Query failed.");
+        }
+      } catch (err: any) {
+        setErrorMessage(err?.message || "Network error.");
+      } finally {
+        setIsProcessing(false);
       }
-
-      setProposal(data.proposal);
-    } catch (err: any) {
-      setErrorMessage(err?.message || "Network error while scoping.");
-    } finally {
-      setIsScoping(false);
+    } else {
+      // Message Scoping
+      try {
+        const res = await fetch("/api/invoices/scope", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: text }),
+        });
+        const data = await res.json();
+        if (!data.ok) {
+          setErrorMessage(data.error || "Failed to scope message.");
+          return;
+        }
+        setProposal(data.proposal);
+      } catch (err: any) {
+        setErrorMessage(err?.message || "Network error while scoping.");
+      } finally {
+        setIsProcessing(false);
+      }
     }
   }
 
@@ -180,7 +209,7 @@ export default function AppShell() {
     }
   }
 
-  // Handle Demo Mark Paid (Stage 3 Watch Replay)
+  // Handle Demo Mark Paid
   async function handleMarkPaid(invoiceId: string) {
     setActiveActionId(invoiceId);
     setErrorMessage(null);
@@ -207,7 +236,7 @@ export default function AppShell() {
     }
   }
 
-  // Handle Simulate Overdue (Stage 4 Chase Time Machine)
+  // Handle Simulate Overdue (Time Machine)
   async function handleSimulateOverdue(invoiceId: string) {
     setActiveActionId(invoiceId);
     setErrorMessage(null);
@@ -265,6 +294,21 @@ export default function AppShell() {
     }
   }
 
+  // Demo Reset
+  async function handleResetDemo() {
+    if (!confirm("Reset database to initial demo state?")) return;
+    try {
+      await fetch("/api/demo/reset", { method: "POST" });
+      setProposal(null);
+      setQueryAnswer(null);
+      setInputText("");
+      setSuccessBanner("Database reset to initial demo seed!");
+      await refreshAll();
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   // Filtered invoices
   const filteredInvoices = invoices.filter((inv) => {
     if (activeTab === "SENT") return inv.status === "SENT";
@@ -296,11 +340,20 @@ export default function AppShell() {
                 Autonomous AR Copilot
               </span>
             </div>
-            <p className="text-xs text-slate-400">Powered by PayPal Invoicing v2 & Multi-Tier Tone Escalation</p>
+            <p className="text-xs text-slate-400">PayPal Invoicing v2 • Autonomous Chasing • Ask Anything</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleResetDemo}
+            title="Reset database to demo seed"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-700 bg-slate-800/60 hover:bg-slate-800 text-xs text-slate-300 transition"
+          >
+            <RotateCcw className="w-3 h-3 text-slate-400" />
+            <span>Reset Demo</span>
+          </button>
+
           <button
             onClick={checkHealth}
             disabled={isCheckingHealth}
@@ -333,35 +386,24 @@ export default function AppShell() {
           <div className="flex items-center justify-between pb-4 border-b border-slate-800/60 mb-4">
             <div className="flex items-center gap-2">
               <Bot className="w-5 h-5 text-blue-400" />
-              <h2 className="font-semibold text-sm text-slate-200">AR Copilot & Invoicing</h2>
+              <h2 className="font-semibold text-sm text-slate-200">AR Copilot & Assistant</h2>
             </div>
             <span className="text-xs px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 font-mono">
-              Stage 4 Chase
+              Stage 5 Complete
             </span>
           </div>
 
-          {/* Assistant Context Pitch */}
-          <div className="p-4 rounded-xl bg-gradient-to-b from-blue-950/30 to-indigo-950/20 border border-blue-500/20 mb-4">
-            <div className="flex items-start gap-3">
-              <Sparkles className="w-5 h-5 text-blue-400 shrink-0 mt-0.5" />
-              <div className="text-xs leading-relaxed text-slate-300">
-                <strong className="text-white block mb-1">Paste any conversation or client agreement.</strong>
-                Get Paid parses line items, scopes the price, verifies email, and sends a PayPal invoice. It watches for payment and escalates reminders (Friendly → Neutral → Firm) so you never write awkward emails.
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Demo Prompts */}
+          {/* Quick Demo Prompts: Scoping & Natural Language Q&A */}
           <div className="mb-4">
             <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block mb-2">
-              Try Sample Client Messages
+              Try Inbound Message or Financial Question
             </label>
             <div className="space-y-2">
               <button
                 onClick={() => {
                   const text = "Sarah Chen: Hey Alex, go ahead with the logo + 3 banners, $500 total. Send to sarah@acmecorp.com.";
                   setInputText(text);
-                  handleScopeMessage(text);
+                  handleSubmitInput(text);
                 }}
                 className="w-full text-left p-2.5 rounded-lg bg-slate-800/40 hover:bg-slate-800/80 border border-slate-800 text-xs text-slate-300 transition flex items-center justify-between group"
               >
@@ -370,13 +412,24 @@ export default function AppShell() {
               </button>
               <button
                 onClick={() => {
-                  const text = "David Miller: Hi Alex, approved the Q3 API Security Audit ($1,800.00). Invoice me at david@fintechlabs.io.";
+                  const text = "Who still owes me?";
                   setInputText(text);
-                  handleScopeMessage(text);
+                  handleSubmitInput(text);
                 }}
                 className="w-full text-left p-2.5 rounded-lg bg-slate-800/40 hover:bg-slate-800/80 border border-slate-800 text-xs text-slate-300 transition flex items-center justify-between group"
               >
-                <span className="truncate">"David Miller: approved Q3 API Security Audit ($1800)..."</span>
+                <span className="truncate">"Who still owes me?" (Deterministic aggregate)</span>
+                <ArrowRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-blue-400 transition shrink-0 ml-2" />
+              </button>
+              <button
+                onClick={() => {
+                  const text = "How much did I make from HyperGrowth?";
+                  setInputText(text);
+                  handleSubmitInput(text);
+                }}
+                className="w-full text-left p-2.5 rounded-lg bg-slate-800/40 hover:bg-slate-800/80 border border-slate-800 text-xs text-slate-300 transition flex items-center justify-between group"
+              >
+                <span className="truncate">"How much did I make from HyperGrowth?"</span>
                 <ArrowRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-blue-400 transition shrink-0 ml-2" />
               </button>
             </div>
@@ -395,6 +448,27 @@ export default function AppShell() {
             <div className="mb-4 p-3 rounded-xl bg-rose-950/60 border border-rose-500/40 text-rose-200 text-xs flex items-center gap-2">
               <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
               <span>{errorMessage}</span>
+            </div>
+          )}
+
+          {/* Q&A Answer Card */}
+          {queryAnswer && (
+            <div className="p-4 rounded-xl bg-blue-950/40 border border-blue-500/30 shadow-xl mb-4 space-y-2">
+              <div className="flex items-center justify-between pb-2 border-b border-blue-500/20">
+                <span className="text-xs font-bold text-blue-300 flex items-center gap-1.5">
+                  <Sparkles className="w-4 h-4 text-blue-400" />
+                  Financial Intelligence Report
+                </span>
+                <button
+                  onClick={() => setQueryAnswer(null)}
+                  className="text-slate-400 hover:text-slate-200 text-xs"
+                >
+                  ✕
+                </button>
+              </div>
+              <p className="text-xs text-slate-200 whitespace-pre-line leading-relaxed font-sans">
+                {queryAnswer}
+              </p>
             </div>
           )}
 
@@ -511,7 +585,7 @@ export default function AppShell() {
             </div>
           )}
 
-          {/* Reminders Inspection Box (If an invoice is clicked) */}
+          {/* Reminders Inspection Box */}
           {inspectingInvoice && (
             <div className="p-4 rounded-xl bg-slate-900 border border-amber-500/30 shadow-xl mb-4 space-y-3">
               <div className="flex items-center justify-between pb-2 border-b border-slate-800">
@@ -552,22 +626,22 @@ export default function AppShell() {
               <textarea
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
-                placeholder="Paste client message, email agreement, or ask 'who still owes me?'..."
+                placeholder="Paste client message to scope, or ask 'who still owes me?'..."
                 rows={4}
                 className="w-full bg-slate-900 border border-slate-700/80 rounded-xl p-3 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 resize-none transition"
               />
               <div className="absolute right-2 bottom-2">
                 <button
-                  onClick={() => handleScopeMessage()}
-                  disabled={isScoping || !inputText.trim()}
+                  onClick={() => handleSubmitInput()}
+                  disabled={isProcessing || !inputText.trim()}
                   className="h-8 px-3 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium flex items-center gap-1.5 shadow-md shadow-blue-600/30 transition disabled:opacity-50"
                 >
-                  {isScoping ? (
+                  {isProcessing ? (
                     <Loader2 className="w-3 h-3 animate-spin" />
                   ) : (
                     <Send className="w-3 h-3" />
                   )}
-                  <span>Scope Bill</span>
+                  <span>Run Agent</span>
                 </button>
               </div>
             </div>
@@ -716,7 +790,7 @@ export default function AppShell() {
                     )}
                   </div>
 
-                  {/* Demo Buttons: Time Machine Overdue & Mark Paid */}
+                  {/* Demo Buttons */}
                   <div className="flex items-center gap-1.5 ml-auto">
                     {inv.status === "SENT" && (
                       <>

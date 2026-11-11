@@ -1,0 +1,166 @@
+{
+  "info": {
+    "name": "Get Paid — Autonomous Accounts-Receivable Agent API",
+    "description": "Complete collection for all internal and PayPal-integrated endpoints of Get Paid.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/health",
+          "host": ["{{base_url}}"],
+          "path": ["api", "health"]
+        }
+      }
+    },
+    {
+      "name": "2. Scope Bill (Proposal Only)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"message\": \"Sarah Chen: Hey Alex, go ahead with the logo + 3 banners, $500 total. Send to sarah@acmecorp.com.\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/invoices/scope",
+          "host": ["{{base_url}}"],
+          "path": ["api", "invoices", "scope"]
+        }
+      }
+    },
+    {
+      "name": "3. Create & Send Invoice (PayPal Invoicing v2)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"clientName\": \"Sarah Chen\",\n  \"clientEmail\": \"sarah@acmecorp.com\",\n  \"dueDate\": \"2024-12-31\",\n  \"currency\": \"USD\",\n  \"lineItems\": [\n    {\n      \"description\": \"Brand Logo Design\",\n      \"quantity\": 1,\n      \"unitPriceCents\": 20000,\n      \"totalCents\": 20000\n    },\n    {\n      \"description\": \"Social Media Banners\",\n      \"quantity\": 3,\n      \"unitPriceCents\": 10000,\n      \"totalCents\": 30000\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/invoices",
+          "host": ["{{base_url}}"],
+          "path": ["api", "invoices"]
+        }
+      }
+    },
+    {
+      "name": "4. List Invoices",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/invoices",
+          "host": ["{{base_url}}"],
+          "path": ["api", "invoices"]
+        }
+      }
+    },
+    {
+      "name": "5. Demo: Mark Paid (Webhook Replay)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"invoiceId\": \"inv_acme_001\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/demo/mark-paid",
+          "host": ["{{base_url}}"],
+          "path": ["api", "demo", "mark-paid"]
+        }
+      }
+    },
+    {
+      "name": "6. Demo: Simulate Overdue (Time Machine)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"invoiceId\": \"inv_acme_001\",\n  \"autoChase\": true\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/demo/simulate-overdue",
+          "host": ["{{base_url}}"],
+          "path": ["api", "demo", "simulate-overdue"]
+        }
+      }
+    },
+    {
+      "name": "7. Autonomous Cron Sweep Tick",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/cron/tick",
+          "host": ["{{base_url}}"],
+          "path": ["api", "cron", "tick"]
+        }
+      }
+    },
+    {
+      "name": "8. Financial Query (Who Owes Me?)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"question\": \"Who still owes me?\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/query",
+          "host": ["{{base_url}}"],
+          "path": ["api", "query"]
+        }
+      }
+    },
+    {
+      "name": "9. Activity Feed Events",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/events?limit=30",
+          "host": ["{{base_url}}"],
+          "path": ["api", "events"],
+          "query": [{ "key": "limit", "value": "30" }]
+        }
+      }
+    },
+    {
+      "name": "10. Reset Database",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/demo/reset",
+          "host": ["{{base_url}}"],
+          "path": ["api", "demo", "reset"]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000"
+    }
+  ]
+}
