@@ -34,7 +34,7 @@ import { MagnetButton } from "@/components/reactbits/magnet-button";
 import GradientASCII from "@/components/reactbits/gradient-ascii";
 
 // ── Shared Motion Tokens ──
-const transitionEase = [0.16, 1, 0.3, 1]; // Premium cubic-bezier
+const transitionEase = [0.16, 1, 0.3, 1] as const; // Premium cubic-bezier
 
 export function ScrollStory() {
   const prefersReducedMotion = useReducedMotion();
@@ -49,13 +49,6 @@ export function ScrollStory() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Section 1 Wrapper: Hero Message -> Invoice
-  const heroWrapperRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress: heroProgress } = useScroll({
-    target: heroWrapperRef,
-    offset: ["start start", "end end"],
-  });
-
   // Section 2 Wrapper: Pinned Time Passes Timeline
   const timelineWrapperRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress: timelineProgress } = useScroll({
@@ -69,11 +62,6 @@ export function ScrollStory() {
     target: askWrapperRef,
     offset: ["start end", "center center"],
   });
-
-  // ── Hero Transforms ──
-  const heroBubbleHighlight = useTransform(heroProgress, [0, 0.25, 0.5, 0.75], [0, 1, 2, 3]);
-  const invoiceStepOpacity = useTransform(heroProgress, [0.1, 0.3, 0.55, 0.8], [0.3, 0.6, 0.85, 1]);
-  const invoiceCardY = useTransform(heroProgress, [0, 0.5, 1], [30, 0, 0]);
 
   // ── Timeline Normalized Transforms (0 to 1 across 350vh) ──
   // Day 0: 0.0 - 0.20 | Day 7: 0.20 - 0.40 | Day 10: 0.40 - 0.60 | Day 14: 0.60 - 0.80 | Day 18+: 0.80 - 1.0
@@ -145,127 +133,124 @@ export function ScrollStory() {
       </header>
 
       {/* ── 1. Hero: The Message Becomes an Invoice ── */}
-      <section ref={heroWrapperRef} className="relative pt-32 md:pt-40 pb-20 px-6 max-w-6xl mx-auto min-h-[180vh]">
-        <div className="sticky top-28 md:top-32 space-y-12">
-          {/* Header Copy */}
-          <div className="max-w-2xl space-y-4">
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white leading-[1.08]">
-              Tell it about the job. It handles the money.
-            </h1>
-            <p className="text-base sm:text-lg text-[#94A3B8] max-w-xl leading-relaxed">
-              Paste any casual client message. The agent scopes line items, delivers a PayPal invoice, and watches the due date for you.
-            </p>
-            <div className="flex items-center gap-4 pt-2">
-              <Link href="/app">
-                <button className="px-5 py-2.5 rounded-full bg-[#84CC16] text-black text-xs font-bold hover:bg-[#9BE329] transition-all shadow-sm active:scale-95">
-                  Open the app
-                </button>
-              </Link>
-              <a
-                href="#timeline"
-                className="px-5 py-2.5 rounded-full bg-[#111827] border border-[#202B3D] text-[#94A3B8] hover:text-white text-xs font-semibold transition-colors flex items-center gap-1.5"
-              >
-                <span>Watch it chase</span>
-                <ChevronDown className="w-3.5 h-3.5" />
-              </a>
-            </div>
-          </div>
-
-          {/* Interactive Scoping Visual (Scroll-Scrubbed) */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-stretch pt-6">
-            {/* Left: Chat Message in Client Bubble */}
-            <div className="md:col-span-5 p-6 rounded-2xl bg-[#0D1220] border border-[#202B3D] flex flex-col justify-between space-y-6">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between text-xs text-[#64748B]">
-                  <span className="font-mono">WhatsApp message</span>
-                  <span>10:24 AM</span>
-                </div>
-
-                <div className="p-4 rounded-xl bg-[#172033] border border-[#202B3D] text-sm text-[#F8FAFC] leading-relaxed space-y-2">
-                  <div className="text-xs text-[#94A3B8] font-semibold">Sarah Chen (Acme Studio)</div>
-                  <p>
-                    Hey Alex! Go ahead with the{" "}
-                    <span className="bg-[#84CC16]/20 text-[#84CC16] px-1 py-0.5 rounded font-medium border border-[#84CC16]/40">
-                      logo + 3 banners
-                    </span>
-                    . Agreed price{" "}
-                    <span className="bg-[#84CC16]/20 text-[#84CC16] px-1 py-0.5 rounded font-medium border border-[#84CC16]/40">
-                      $500 flat
-                    </span>
-                    . Send over the invoice when you can!
-                  </p>
-                </div>
-              </div>
-
-              <div className="text-[11px] font-mono text-[#64748B] flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#84CC16] animate-pulse" />
-                <span>Scroll down to see the agent extract line items</span>
-              </div>
-            </div>
-
-            {/* Right: The Structured PayPal Invoice Card */}
-            <motion.div
-              style={{
-                opacity: prefersReducedMotion ? 1 : invoiceStepOpacity,
-                y: prefersReducedMotion ? 0 : invoiceCardY,
-              }}
-              className="md:col-span-7 p-6 rounded-2xl bg-[#111827] border border-[#202B3D] shadow-2xl flex flex-col justify-between space-y-6"
+      <section className="relative pt-32 md:pt-40 pb-20 px-6 max-w-6xl mx-auto space-y-12">
+        {/* Header Copy */}
+        <div className="max-w-2xl space-y-4">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white leading-[1.08]">
+            Tell it about the job. It handles the money.
+          </h1>
+          <p className="text-base sm:text-lg text-[#94A3B8] max-w-xl leading-relaxed">
+            Paste any casual client message. The agent scopes line items, delivers a PayPal invoice, and watches the due date for you.
+          </p>
+          <div className="flex items-center gap-4 pt-2">
+            <Link href="/app">
+              <button className="px-5 py-2.5 rounded-full bg-[#84CC16] text-black text-xs font-bold hover:bg-[#9BE329] transition-all shadow-sm active:scale-95">
+                Open the app
+              </button>
+            </Link>
+            <a
+              href="#timeline"
+              className="px-5 py-2.5 rounded-full bg-[#111827] border border-[#202B3D] text-[#94A3B8] hover:text-white text-xs font-semibold transition-colors flex items-center gap-1.5"
             >
-              <div className="space-y-4">
-                <div className="flex items-center justify-between pb-3 border-b border-[#202B3D]">
-                  <div className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-[#84CC16]" />
-                    <span className="font-bold text-sm text-white">PayPal Invoice Preview</span>
-                  </div>
-                  <span className="text-[11px] font-mono text-[#10B981] bg-[#10B981]/10 px-2 py-0.5 rounded-full border border-[#10B981]/20">
-                    Drafted in 0.2s
-                  </span>
-                </div>
-
-                {/* Recipient */}
-                <div className="grid grid-cols-2 gap-4 text-xs">
-                  <div>
-                    <span className="text-[#64748B] block text-[10px] uppercase font-mono mb-0.5">Billed to</span>
-                    <span className="font-semibold text-white">Sarah Chen · Acme Studio</span>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-[#64748B] block text-[10px] uppercase font-mono mb-0.5">Terms</span>
-                    <span className="font-mono text-white">Net 7 Days</span>
-                  </div>
-                </div>
-
-                {/* Line Items */}
-                <div className="space-y-2 pt-2">
-                  <span className="text-[#64748B] block text-[10px] uppercase font-mono">Scoped line items</span>
-                  <div className="space-y-1.5">
-                    <div className="p-2.5 rounded-lg bg-[#0D1220] border border-[#202B3D] flex items-center justify-between text-xs">
-                      <span className="text-[#F8FAFC]">Brand identity & primary logo design</span>
-                      <span className="font-mono font-semibold text-white">$350.00</span>
-                    </div>
-                    <div className="p-2.5 rounded-lg bg-[#0D1220] border border-[#202B3D] flex items-center justify-between text-xs">
-                      <span className="text-[#F8FAFC]">3 social marketing banners</span>
-                      <span className="font-mono font-semibold text-white">$150.00</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Total */}
-                <div className="flex items-center justify-between pt-3 border-t border-[#202B3D]">
-                  <span className="text-xs text-[#94A3B8]">Total amount</span>
-                  <span className="text-xl font-bold text-white tabular-nums">$500.00 USD</span>
-                </div>
-              </div>
-
-              {/* Status footer */}
-              <div className="pt-3 border-t border-[#202B3D] flex items-center justify-between text-xs">
-                <span className="text-[#10B981] flex items-center gap-1.5 font-medium">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>Sent via PayPal Sandbox Rails</span>
-                </span>
-                <span className="text-[11px] font-mono text-[#64748B]">Example invoice</span>
-              </div>
-            </motion.div>
+              <span>Watch it chase</span>
+              <ChevronDown className="w-3.5 h-3.5" />
+            </a>
           </div>
+        </div>
+
+        {/* Interactive Scoping Visual */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-stretch pt-2">
+          {/* Left: Chat Message in Client Bubble */}
+          <div className="md:col-span-5 p-6 rounded-2xl bg-[#0D1220] border border-[#202B3D] flex flex-col justify-between space-y-6">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between text-xs text-[#64748B]">
+                <span className="font-mono">WhatsApp message</span>
+                <span>10:24 AM</span>
+              </div>
+
+              <div className="p-4 rounded-xl bg-[#172033] border border-[#202B3D] text-sm text-[#F8FAFC] leading-relaxed space-y-2">
+                <div className="text-xs text-[#94A3B8] font-semibold">Sarah Chen (Acme Studio)</div>
+                <p>
+                  Hey Alex! Go ahead with the{" "}
+                  <span className="bg-[#84CC16]/20 text-[#84CC16] px-1 py-0.5 rounded font-medium border border-[#84CC16]/40">
+                    logo + 3 banners
+                  </span>
+                  . Agreed price{" "}
+                  <span className="bg-[#84CC16]/20 text-[#84CC16] px-1 py-0.5 rounded font-medium border border-[#84CC16]/40">
+                    $500 flat
+                  </span>
+                  . Send over the invoice when you can!
+                </p>
+              </div>
+            </div>
+
+            <div className="text-[11px] font-mono text-[#64748B] flex items-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#84CC16] animate-pulse" />
+              <span>Autonomous invoice generated instantly</span>
+            </div>
+          </div>
+
+          {/* Right: The Structured PayPal Invoice Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: transitionEase }}
+            className="md:col-span-7 p-6 rounded-2xl bg-[#111827] border border-[#202B3D] shadow-2xl flex flex-col justify-between space-y-6"
+          >
+            <div className="space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-[#202B3D]">
+                <div className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-[#84CC16]" />
+                  <span className="font-bold text-sm text-white">PayPal Invoice Preview</span>
+                </div>
+                <span className="text-[11px] font-mono text-[#10B981] bg-[#10B981]/10 px-2 py-0.5 rounded-full border border-[#10B981]/20">
+                  Drafted in 0.2s
+                </span>
+              </div>
+
+              {/* Recipient */}
+              <div className="grid grid-cols-2 gap-4 text-xs">
+                <div>
+                  <span className="text-[#64748B] block text-[10px] uppercase font-mono mb-0.5">Billed to</span>
+                  <span className="font-semibold text-white">Sarah Chen · Acme Studio</span>
+                </div>
+                <div className="text-right">
+                  <span className="text-[#64748B] block text-[10px] uppercase font-mono mb-0.5">Terms</span>
+                  <span className="font-mono text-white">Net 7 Days</span>
+                </div>
+              </div>
+
+              {/* Line Items */}
+              <div className="space-y-2 pt-2">
+                <span className="text-[#64748B] block text-[10px] uppercase font-mono">Scoped line items</span>
+                <div className="space-y-1.5">
+                  <div className="p-2.5 rounded-lg bg-[#0D1220] border border-[#202B3D] flex items-center justify-between text-xs">
+                    <span className="text-[#F8FAFC]">Brand identity & primary logo design</span>
+                    <span className="font-mono font-semibold text-white">$350.00</span>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-[#0D1220] border border-[#202B3D] flex items-center justify-between text-xs">
+                    <span className="text-[#F8FAFC]">3 social marketing banners</span>
+                    <span className="font-mono font-semibold text-white">$150.00</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Total */}
+              <div className="flex items-center justify-between pt-3 border-t border-[#202B3D]">
+                <span className="text-xs text-[#94A3B8]">Total amount</span>
+                <span className="text-xl font-bold text-white tabular-nums">$500.00 USD</span>
+              </div>
+            </div>
+
+            {/* Status footer */}
+            <div className="pt-3 border-t border-[#202B3D] flex items-center justify-between text-xs">
+              <span className="text-[#10B981] flex items-center gap-1.5 font-medium">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>Sent via PayPal Sandbox Rails</span>
+              </span>
+              <span className="text-[11px] font-mono text-[#64748B]">Example invoice</span>
+            </div>
+          </motion.div>
         </div>
       </section>
 
@@ -273,9 +258,9 @@ export function ScrollStory() {
       <section
         id="timeline"
         ref={timelineWrapperRef}
-        className="relative min-h-[320vh] px-6 max-w-6xl mx-auto"
+        className="relative min-h-[175vh] px-6 max-w-6xl mx-auto"
       >
-        <div className="sticky top-24 md:top-28 space-y-8 pb-16">
+        <div className="sticky top-24 md:top-28 space-y-8 pb-12">
           {/* Header Section */}
           <div className="space-y-2 max-w-2xl">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#111827] border border-[#202B3D] text-[#94A3B8] text-xs font-mono">
