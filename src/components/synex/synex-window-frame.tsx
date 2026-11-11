@@ -58,7 +58,7 @@ export function SynexWindowFrame({ children }: SynexWindowFrameProps) {
   };
 
   const navItems = [
-    { label: "Dashboard", href: "/" },
+    { label: "Dashboard", href: "/app" },
     { label: "Invoices", href: "/invoices" },
     { label: "Analytics", href: "/activity" },
     { label: "AI Assistant", href: "/assistant" },

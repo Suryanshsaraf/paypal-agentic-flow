@@ -40,7 +40,7 @@ export function SynexSubpageShell({
   const [searchTerm, setSearchTerm] = useState("");
 
   const navLinks = [
-    { label: "Dashboard", href: "/" },
+    { label: "Dashboard", href: "/app" },
     { label: "Invoices Portfolio", href: "/invoices" },
     { label: "Analytics Subsections", href: "/activity" },
     { label: "AI Copilot Terminal", href: "/assistant" },
