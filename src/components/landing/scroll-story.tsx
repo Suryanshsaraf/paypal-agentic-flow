@@ -379,12 +379,43 @@ export function ScrollStory() {
       {/* ── 3. Payment Lands (The Settlement Beat) ── */}
       <section className="py-24 px-6 max-w-4xl mx-auto">
         <div className="p-8 sm:p-10 rounded-3xl bg-[#0D1220] border border-[#10B981]/30 shadow-[0_0_50px_rgba(16,185,129,0.1)] text-center space-y-6 relative overflow-hidden">
-          <div className="mx-auto flex items-center justify-center gap-4">
-            <div className="inline-flex items-center justify-center p-3 rounded-full bg-[#10B981]/10 border border-[#10B981]/30">
-              <LottieCheck size={48} />
+          <div className="mx-auto flex items-center justify-center gap-3">
+            {/* Circle 1: Official PayPal Monogram */}
+            <div
+              className="h-14 w-14 rounded-full bg-gradient-to-br from-[#003087]/30 via-[#0079C1]/20 to-[#0D1220] border border-[#0079C1]/50 flex items-center justify-center shadow-[0_0_25px_rgba(0,121,193,0.35)] transition-transform hover:scale-105"
+              title="PayPal Webhook Verified"
+            >
+              <svg className="w-6 h-6" viewBox="0 0 34 32" fill="none">
+                <path
+                  d="M10.8 3.5H3.9C3.5 3.5 3.2 3.8 3.1 4.2L0 26C-0.03 26.3 0.2 26.6 0.5 26.6H4.2C4.6 26.6 4.9 26.3 5 25.9L6.1 18.6C6.2 18.2 6.5 17.9 6.9 17.9H9.3C14.6 17.9 17.6 15.3 18.4 10.4C18.7 8.3 18.3 6.6 17.1 5.4C15.9 4.1 13.9 3.5 10.8 3.5Z"
+                  fill="#0079C1"
+                />
+                <path
+                  d="M26.8 10.5H19.9C19.5 10.5 19.2 10.8 19.1 11.2L16.8 25.6C16.7 26 17 26.3 17.4 26.3H21.1C21.5 26.3 21.8 26 21.9 25.6L22.7 20.2C22.8 19.8 23.1 19.5 23.5 19.5H24.9C30.2 19.5 33.2 16.9 34 12C34.3 9.9 33.9 8.2 32.7 7C31.5 5.7 29.5 5.1 26.8 5.1"
+                  fill="#00457C"
+                />
+                <path
+                  d="M18.4 10.4C17.6 15.3 14.6 17.9 9.3 17.9H6.9C6.5 17.9 6.2 18.2 6.1 18.6L5 25.9C4.9 26.3 4.6 26.6 4.2 26.6H0.5C0.2 26.6 -0.03 26.3 0 26L3.1 4.2C3.2 3.8 3.5 3.5 3.9 3.5H10.8C13.9 3.5 15.9 4.1 17.1 5.4C18.3 6.6 18.7 8.3 18.4 10.4Z"
+                  fill="#0079C1"
+                />
+              </svg>
             </div>
-            <div className="inline-flex items-center justify-center p-2 rounded-full bg-amber-400/10 border border-amber-400/20">
-              <LottieCoins size={46} />
+
+            {/* Glowing Connector Track */}
+            <div className="flex items-center gap-1 px-1">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#0079C1] animate-ping" />
+              <span className="h-0.5 w-8 bg-gradient-to-r from-[#0079C1] to-[#84CC16]" />
+              <span className="h-1.5 w-1.5 rounded-full bg-[#84CC16] animate-pulse" />
+            </div>
+
+            {/* Circle 2: High-Def Currency Settlement Symbol ($) */}
+            <div
+              className="h-14 w-14 rounded-full bg-gradient-to-br from-[#84CC16]/30 via-[#10B981]/20 to-[#0D1220] border border-[#84CC16]/50 flex items-center justify-center shadow-[0_0_25px_rgba(132,204,22,0.35)] transition-transform hover:scale-105"
+              title="Instant Cash Flow Settlement"
+            >
+              <span className="text-2xl font-black text-[#84CC16] font-mono leading-none flex items-center justify-center">
+                $
+              </span>
             </div>
           </div>
 
