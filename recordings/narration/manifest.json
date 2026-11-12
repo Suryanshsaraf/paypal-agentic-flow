@@ -1,0 +1,68 @@
+[
+  {
+    "key": "hero",
+    "text": "Meet Get Paid \u2014 an autonomous accounts-receivable agent built for freelancers. You just paste any casual client message, and the agent reads it, scopes out the line items, and drafts a PayPal invoice in seconds.",
+    "file": "D:\\sai\\Family\\Sai Arihara Sudan\\Coding VS code\\Paypal_2026\\paypal-agentic-flow\\recordings\\narration\\hero.mp3",
+    "dur": 14.09
+  },
+  {
+    "key": "chase",
+    "text": "Once that invoice goes out, the agent watches the due date for you. If a client runs late, it sends escalating, professional follow-ups on its own \u2014 friendly at first, then firmer \u2014 and it can even pause deliverables to protect your time.",
+    "file": "D:\\sai\\Family\\Sai Arihara Sudan\\Coding VS code\\Paypal_2026\\paypal-agentic-flow\\recordings\\narration\\chase.mp3",
+    "dur": 14.83
+  },
+  {
+    "key": "monitor",
+    "text": "It runs on live PayPal rails, monitoring payment webhooks around the clock \u2014 collecting for you even when your computer is switched off.",
+    "file": "D:\\sai\\Family\\Sai Arihara Sudan\\Coding VS code\\Paypal_2026\\paypal-agentic-flow\\recordings\\narration\\monitor.mp3",
+    "dur": 8.21
+  },
+  {
+    "key": "assistant",
+    "text": "A built-in AI assistant lets you ask about any invoice, client, or payment, in plain English.",
+    "file": "D:\\sai\\Family\\Sai Arihara Sudan\\Coding VS code\\Paypal_2026\\paypal-agentic-flow\\recordings\\narration\\assistant.mp3",
+    "dur": 6.84
+  },
+  {
+    "key": "how",
+    "text": "Under the hood it's a clear, five-step pipeline \u2014 bill, watch, chase, and ask \u2014 so every action the agent takes is fully auditable.",
+    "file": "D:\\sai\\Family\\Sai Arihara Sudan\\Coding VS code\\Paypal_2026\\paypal-agentic-flow\\recordings\\narration\\how.mp3",
+    "dur": 9.36
+  },
+  {
+    "key": "cta",
+    "text": "The whole experience is designed to get freelancers paid faster, with zero awkward chasing.",
+    "file": "D:\\sai\\Family\\Sai Arihara Sudan\\Coding VS code\\Paypal_2026\\paypal-agentic-flow\\recordings\\narration\\cta.mp3",
+    "dur": 5.78
+  },
+  {
+    "key": "app",
+    "text": "Let's step inside the app. This is your accounts-receivable command center.",
+    "file": "D:\\sai\\Family\\Sai Arihara Sudan\\Coding VS code\\Paypal_2026\\paypal-agentic-flow\\recordings\\narration\\app.mp3",
+    "dur": 4.51
+  },
+  {
+    "key": "invoices",
+    "text": "The invoices view shows everything at a glance \u2014 total outstanding, settled volume, and which accounts are overdue \u2014 with one-click actions to chase a client or mark them paid.",
+    "file": "D:\\sai\\Family\\Sai Arihara Sudan\\Coding VS code\\Paypal_2026\\paypal-agentic-flow\\recordings\\narration\\invoices.mp3",
+    "dur": 11.02
+  },
+  {
+    "key": "analytics",
+    "text": "Analytics break down your cash flow and collection performance over time, so you always know where your money stands.",
+    "file": "D:\\sai\\Family\\Sai Arihara Sudan\\Coding VS code\\Paypal_2026\\paypal-agentic-flow\\recordings\\narration\\analytics.mp3",
+    "dur": 7.01
+  },
+  {
+    "key": "copilot",
+    "text": "The AI copilot answers financial questions and can take action on your behalf, right from the dashboard.",
+    "file": "D:\\sai\\Family\\Sai Arihara Sudan\\Coding VS code\\Paypal_2026\\paypal-agentic-flow\\recordings\\narration\\copilot.mp3",
+    "dur": 6.55
+  },
+  {
+    "key": "clients",
+    "text": "And the clients directory keeps every payer, along with their full payment history, in one organized place.",
+    "file": "D:\\sai\\Family\\Sai Arihara Sudan\\Coding VS code\\Paypal_2026\\paypal-agentic-flow\\recordings\\narration\\clients.mp3",
+    "dur": 7.22
+  }
+]

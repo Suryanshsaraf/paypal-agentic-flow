@@ -53,7 +53,7 @@ export function ScrollStory() {
   const timelineWrapperRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress: timelineProgress } = useScroll({
     target: timelineWrapperRef,
-    offset: ["start start", "end end"],
+    offset: ["start end", "end center"],
   });
 
   // Section 4 Wrapper: Ask It Anything
@@ -258,9 +258,9 @@ export function ScrollStory() {
       <section
         id="timeline"
         ref={timelineWrapperRef}
-        className="relative min-h-[175vh] px-6 max-w-6xl mx-auto"
+        className="relative py-12 md:py-16 px-6 max-w-6xl mx-auto"
       >
-        <div className="sticky top-24 md:top-28 space-y-8 pb-12">
+        <div className="space-y-8">
           {/* Header Section */}
           <div className="space-y-2 max-w-2xl">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#111827] border border-[#202B3D] text-[#94A3B8] text-xs font-mono">

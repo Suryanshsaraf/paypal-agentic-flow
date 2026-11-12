@@ -1,0 +1,60 @@
+{
+  "timings": [
+    {
+      "key": "hero",
+      "start": 4.739,
+      "dur": 14.09
+    },
+    {
+      "key": "chase",
+      "start": 20.878,
+      "dur": 14.83
+    },
+    {
+      "key": "monitor",
+      "start": 37.329,
+      "dur": 8.21
+    },
+    {
+      "key": "assistant",
+      "start": 47.071,
+      "dur": 6.84
+    },
+    {
+      "key": "how",
+      "start": 55.423,
+      "dur": 9.36
+    },
+    {
+      "key": "cta",
+      "start": 66.309,
+      "dur": 5.78
+    },
+    {
+      "key": "app",
+      "start": 75.372,
+      "dur": 4.51
+    },
+    {
+      "key": "invoices",
+      "start": 83.552,
+      "dur": 11.02
+    },
+    {
+      "key": "analytics",
+      "start": 99.617,
+      "dur": 7.01
+    },
+    {
+      "key": "copilot",
+      "start": 111.113,
+      "dur": 6.55
+    },
+    {
+      "key": "clients",
+      "start": 122.205,
+      "dur": 7.22
+    }
+  ],
+  "totalMs": 133797
+}
