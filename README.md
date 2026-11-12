@@ -1,4 +1,4 @@
-# ⚡ Get Paid (SYNEX)
+# ⚡ Get Paid 
 ### Autonomous Accounts-Receivable Agent for PayPal & AI
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Render%20Active-84CC16?style=for-the-badge&logo=render&logoColor=white)](https://get-paid-zpzz.onrender.com/)
